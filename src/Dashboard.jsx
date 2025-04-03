@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Header from './components/Layout/Header';
-import LeftSidebar from './components/Layout/LeftSidebar';
-import RightSidebar from './components/Layout/RightSidebar';
+import LeftSidebar from './components/Layout/LeftSideBar';
+import RightSidebar from './components/Layout/RightSideBar';
 import MainContent from './components/Layout/MainContent';
 
 export function Dashboard() {
