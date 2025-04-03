@@ -1,4 +1,4 @@
-function RightSidebar() {
+function RightSidebar({ isOpen, onClose }) {
 	const notifications = [
 		{ time: '16:30', name: 'Барбера Руслана' },
 		{ time: '17:30', name: 'Барбера Анатолия' },
@@ -11,8 +11,16 @@ function RightSidebar() {
 	];
 
 	return (
-		<aside className="fixed top-16 right-0 w-64 h-[calc(100vh-4rem)] bg-white shadow p-4">
-			<h3 className="text-lg font-semibold mb-4">Уведомления</h3>
+		<aside
+			className={`fixed top-16 right-0 w-64 h-[calc(100vh-4rem)] bg-white shadow p-4 z-10 transform transition-transform duration-300
+			${isOpen ? 'translate-x-0' : 'translate-x-full'} md:translate-x-0 md:w-64 md:block`}
+		>
+			<div className="flex items-center justify-between mb-6">
+				<h3 className="text-lg font-semibold">Уведомления</h3>
+				<button className="md:hidden p-2" onClick={onClose}>
+					<span>✖</span>
+				</button>
+			</div>
 			<div className="space-y-2">
 				<div className="flex items-center justify-between">
 					<span className="text-sm text-gray-500">Средняя стоимость рекламы</span>
@@ -32,7 +40,9 @@ function RightSidebar() {
 			<div className="space-y-2">
 				{notifications.map((notification, index) => (
 					<div key={index} className="flex items-center justify-between">
-						<span className="text-sm">{notification.time} запись у {notification.name}</span>
+						<span className="text-sm">
+							{notification.time} запись у {notification.name}
+						</span>
 						<button className="text-blue-500">❌</button>
 					</div>
 				))}

@@ -1,29 +1,20 @@
-function MainContent() {
+export function MainContent() {
 	return (
 		<main
-			className="ml-64 mr-64 mt-16 p-6 h-[calc(100vh-4rem)] overflow-y-auto"
+			className="pt-16 px-4 sm:px-6 md:ml-64 md:mr-64 h-[calc(100vh-4rem)] overflow-y-auto"
 			style={{ backgroundColor: '#f5f7fa' }}
 		>
-			<h1 className="text-2xl font-bold mb-6">Дашборд</h1>
-
-			{/* Metric Cards */}
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-				<h1>hello</h1>
-			</div>
+			<h1 className="text-xl sm:text-2xl font-bold mb-6">Дашборд</h1>
 
 			{/* Charts */}
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-				<div className="bg-white p-6 rounded-lg shadow">
-					<h1>hello</h1>
-				</div>
-				<div className="bg-white p-6 rounded-lg shadow">
-					<h1>hello</h1>
-				</div>
-				<div className="bg-white p-6 rounded-lg shadow">
-					<h1>hello</h1>
-				</div>
+				{Array.from({ length: 20 }).map((_, index) => (
+					<div className="bg-white p-6 rounded-lg shadow">
+						<h1>hello</h1>
+					</div>
+				))}
 			</div>
-		</main>
+		</main >
 	);
 }
 
