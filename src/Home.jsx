@@ -1,10 +1,16 @@
 import './index.css'
-import { Hero } from './sections/Home/hero';
+import HeroSection from './sections/Home/hero';
+import { Navbar } from './components/navbar';
+import WhyWe from './sections/Home/WhyWe';
+import Reviews from './sections/Home/Reviews';
 
 const HomePage = () => {
 	return (
 		<>
-			<Hero />
+			<Navbar />
+			<HeroSection />
+			<WhyWe />
+			<Reviews />
 		</>
 	);
 };
