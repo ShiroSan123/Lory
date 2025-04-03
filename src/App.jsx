@@ -1,14 +1,22 @@
 import { useState } from 'react'
+import { useLocation, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import './index.css'
 // Pages
 import HomePage from './Home'
+import { Dashboard } from './Dashboard'
 
 function App() {
 	const [count, setCount] = useState(0)
 
 	return (
 		<>
-			<HomePage />
+			<BrowserRouter>
+				<Routes>
+					<Route path="/" element={<HomePage />} />
+					<Route path="/CRM/Dashboard" element={<Dashboard />} />
+				</Routes>
+			</BrowserRouter>
 		</>
 	)
 }

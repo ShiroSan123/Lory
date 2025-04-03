@@ -25,7 +25,7 @@ export const Navbar = ({ menuOpen, setMenuOpen }) => {
 					</a>
 
 					<div className="hidden md:flex items-center space-x-8 *:text-black-800 *:hover:text-[#187A00] *:transition-colors">
-						<a href="/#Home"> Главна </a>
+						<a href="/CRM/Dashboard"> Главная </a>
 					</div>
 				</div>
 			</div>
