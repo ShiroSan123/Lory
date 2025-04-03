@@ -14,7 +14,7 @@ function App() {
 			<BrowserRouter>
 				<Routes>
 					<Route path="/" element={<HomePage />} />
-					<Route path="/CRM/Dashboard" element={<Dashboard />} />
+					<Route path="/Dashboard" element={<Dashboard />} />
 				</Routes>
 			</BrowserRouter>
 		</>
