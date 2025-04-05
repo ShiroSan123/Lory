@@ -24,7 +24,5 @@ jobs:
             git pull origin main
             npm install
             npm run build
-            # Удаляем все файлы из каталога /var/www/html
             rm -rf /var/www/html/*
-            # Копируем содержимое папки dist в /var/www/html
             cp -r dist/* /var/www/html/
