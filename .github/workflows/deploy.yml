@@ -25,6 +25,6 @@ jobs:
             npm install
             npm run build
             # Удаляем все файлы из каталога /var/www/html
-            sudo rm -rf /var/www/html/*
+            rm -rf /var/www/html/*
             # Копируем содержимое папки dist в /var/www/html
-            sudo cp -r dist/* /var/www/html/
+            cp -r dist/* /var/www/html/
