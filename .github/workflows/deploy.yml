@@ -16,12 +16,11 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           password: ${{ secrets.REMOTE_PASSWORD }}
-          port: ${{ secrets.REMOTE_PORT }}
+          port: 22
           script: |
+            echo "Connecting to $REMOTE_HOST as $REMOTE_USER"
             cd ${{ secrets.PROJECT_DIR }}
-            echo "Pulling latest changes..."
+            pwd
             git pull origin main
-            echo "Installing dependencies..."
             npm install
-            echo "Running build..."
             npm run build
