@@ -5,7 +5,7 @@ const Reviews = () => {
 	// Массив отзывов (для примера)
 	const reviews = [
 		{
-			name: "Алина Григорьев",
+			name: "Айаал Григорьев",
 			title: "Основатель арендодателя доставок GetLet",
 			text: "Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum",
 		},
