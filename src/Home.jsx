@@ -9,7 +9,6 @@ const HomePage = () => {
 	return (
 		<>
 			<Navbar />
-			<HeroSection />
 			<WhyWe />
 			<Reviews />
 			<Footer />
