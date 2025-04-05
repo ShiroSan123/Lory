@@ -16,7 +16,7 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           password: ${{ secrets.REMOTE_PASSWORD }}
-          port: 22
+          port: 53
           script: |
             cd ${{ secrets.PROJECT_DIR }}
             echo "Pulling latest changes..."
