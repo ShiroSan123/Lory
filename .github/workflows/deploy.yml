@@ -1,4 +1,4 @@
-name: Deploy via SSH - Git pull and npm run build
+name: Deploy via SSH - Git pull, npm run build and deploy
 
 on:
   push:
@@ -24,3 +24,7 @@ jobs:
             git pull origin main
             npm install
             npm run build
+            # Удаляем все файлы из каталога /var/www/html
+            sudo rm -rf /var/www/html/*
+            # Копируем содержимое папки dist в /var/www/html
+            sudo cp -r dist/* /var/www/html/
