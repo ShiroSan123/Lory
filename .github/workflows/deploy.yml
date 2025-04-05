@@ -1,0 +1,28 @@
+name: Deploy via SSH - Git pull and npm run build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH into server and deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.REMOTE_KEY }}
+          port: ${{ secrets.REMOTE_PORT }}
+          script: |
+            cd Lory
+            echo "Pulling latest changes..."
+            git pull origin main
+            echo "Installing dependencies..."
+            npm install
+            rm -rf dist
+            echo "Running build..."
+            npm run build
