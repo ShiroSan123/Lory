@@ -15,14 +15,13 @@ jobs:
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.REMOTE_KEY }}
+          password: ${{ secrets.REMOTE_PASSWORD }}
           port: ${{ secrets.REMOTE_PORT }}
           script: |
-            cd Lory
+            cd ${{ secrets.PROJECT_DIR }}
             echo "Pulling latest changes..."
             git pull origin main
             echo "Installing dependencies..."
             npm install
-            rm -rf dist
             echo "Running build..."
             npm run build
