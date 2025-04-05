@@ -25,9 +25,6 @@ jobs:
             npm install
             npm run build
             sudo rm -rf /var/www/lory/*
-            sudo mv ./dist /var/www/lory
-            sudo mv /var/www/lory/dist /var/www/lory
+            sudo mv ./dist/* /var/www/lory
             sudo chown -R www-data:www-data /var/www/lory
             sudo chmod -R 755 /var/www/lory
-
-
