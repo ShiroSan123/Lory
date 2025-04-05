@@ -1,16 +1,16 @@
 import './index.css'
 import HeroSection from './sections/Home/hero';
-import { Navbar } from './components/navbar';
-import WhyWe from './sections/Home/WhyWe';
+import WhyWee from './sections/Home/WhyWe';
+import Header from './components/navbar';
 import Reviews from './sections/Home/Reviews';
 import Footer from './components/Footer';
 
 const HomePage = () => {
 	return (
 		<>
-			<Navbar />
+			<Header />
 			<HeroSection />
-			<WhyWe />
+			<WhyWee />
 			<Reviews />
 			<Footer />
 		</>

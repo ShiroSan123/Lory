@@ -1,35 +1,33 @@
-import { useEffect } from 'react';
-import { HiMenu } from 'react-icons/hi'; // Импортируем иконку
+import React from 'react';
+import { HiMenuAlt3 } from 'react-icons/hi';
+import LogoIcon from '/Logo-ico.svg';
 
-export const Navbar = ({ menuOpen, setMenuOpen }) => {
-	useEffect(() => {
-		document.body.style.overflow = menuOpen ? "hidden" : "";
-	}, [menuOpen]);
-
+const Header = () => {
 	return (
-		<nav className="fixed top-0 w-full z-40 bg-[#f3f3f3] border-b border-white/10">
-			<div className="max-w-5xl md:max-w-full mx-auto px-5 md:px-[130px]">
-				<div className="grid grid-cols-3 justify-between items-center h-[50px] md:h-auto md:pb-4 md:pt-6">
-					<div className="w-7 h-5 relative cursor-pointer z-40 md:hidden"
-						onClick={() => setMenuOpen((prev) => !prev)}>
-						<HiMenu className="w-5 h-5" />
-					</div>
-
-					<div className='text-center'>
-						<h1>Lory</h1>
-					</div>
-
-					<a href="/" className="font-mono text-sm sm:text-3xl md:text-5xl font-bold text-white">
-						{/* <img src="/logo.svg" alt="Tours of Yakutia Logo" className="h-8 w-auto" /> */}
-						<h1 className='text-black font-light'>Регистрация</h1>
-					</a>
-
-					<div className="hidden md:flex items-center space-x-8 *:text-black-800 *:hover:text-[#187A00] *:transition-colors">
-						<a href="/Dashboard"> CRM </a>
-					</div>
-				</div>
+		<header className="flex items-center px-4 py-3 bg-white shadow-md md:px-6 lg:px-8 relative">
+			{/* Левая часть: иконка меню */}
+			<div className="flex items-center">
+				<button className="text-gray-600 focus:outline-none md:hidden">
+					<HiMenuAlt3 className="w-6 h-6" />
+				</button>
 			</div>
-		</nav>
 
-	)
-}
+			{/* Центральная часть: логотип */}
+			<a className="flex items-center space-x-2 mx-auto" href='/'>
+				<img src={LogoIcon} alt="Lory Logo" className="w-10 h-10" />
+				<span className="text-lg font-semibold text-gray-800 sm:text-xl lg:text-2xl">
+					LoryCRM
+				</span>
+			</a>
+
+			{/* Правая часть: кнопка "Регистрация" */}
+			<a href='/BusinessRegPage' className='absolute right-5'>
+				<button className="text-sm font-medium text-gray-700 hover:text-blue-500 transition-colors sm:text-base lg:text-lg">
+					Регистрация
+				</button>
+			</a>
+		</header>
+	);
+};
+
+export default Header;

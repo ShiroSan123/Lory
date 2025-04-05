@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaArrowLeft } from 'react-icons/fa';
+import LogoIcon from '/Logo-ico.svg';
 
 const BusinessRegistration = () => {
 	const [step, setStep] = useState(1);
@@ -39,11 +40,9 @@ const BusinessRegistration = () => {
 
 	const Logo = () => (
 		<div className="flex justify-center items-center mb-8">
-			<div className="flex items-center space-x-3">
-				<div className="w-10 h-10 bg-[#3B82F6] rounded flex items-center justify-center text-white font-bold text-lg">
-					lo
-				</div>
-				<span className="text-2xl font-bold text-black">LoryCRM</span>
+			<div className="flex-col gap-4 items-center text-center space-x-3">
+				<img src={LogoIcon} alt="Lory Logo" className="w-40 h-40" />
+				<span className="text-3xl font-bold text-black">LoryCRM</span>
 			</div>
 		</div>
 	);

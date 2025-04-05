@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { HiCheckCircle, HiChatAlt, HiMail, HiDocument, HiPhone, HiCog, HiChartPie, HiCalendar, HiBell, HiCheck, HiPhotograph, HiOfficeBuilding, HiClipboard } from 'react-icons/hi';
 
-const WhyWe = () => {
+const WhyWee = () => {
 	const [scrollY, setScrollY] = useState(0);
 
 	// Отслеживаем прокрутку для первой секции
@@ -113,4 +113,4 @@ const WhyWe = () => {
 	);
 };
 
-export default WhyWe;
+export default WhyWee;
