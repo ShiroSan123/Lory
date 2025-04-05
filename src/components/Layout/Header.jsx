@@ -9,7 +9,7 @@ function Header({ onToggleLeftSidebar, onToggleRightSidebar }) {
 				>
 					<span>☰</span>
 				</button>
-				<span className="text-lg font-bold">Grigo_Ayaal</span>
+				<a className="text-lg font-bold" href="/BusinessRegPage">Регистрация</a>
 			</div>
 			<div className="flex items-center space-x-4">
 				<button className="p-2 rounded-full hover:bg-gray-200">
