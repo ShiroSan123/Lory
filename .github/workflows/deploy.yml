@@ -24,3 +24,6 @@ jobs:
             git pull origin main
             npm install
             npm run build
+            sudo rm -rf /var/www/lory/*
+            sudo mv /root/Lory/dist /var/www/lory
+
