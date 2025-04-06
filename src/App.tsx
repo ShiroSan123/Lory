@@ -9,6 +9,7 @@ import BusinessRegPage from './BusinessReg';
 import Dashboard from './Dashboard';
 import RegUser from './RegUser';
 import LoginUser from './LoginUser';
+import Gallery from './Gallery';
 
 // function App() {
 // 	const [count, setCount] = useState<number>(0); // Тип для count
@@ -55,6 +56,7 @@ function App() {
 					<Route path="/Dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 					<Route path="/BusinessRegPage" element={<BusinessRegPage />} />
 					<Route path="/RegUser" element={<RegUser />} />
+					<Route path="/Gallery" element={<Gallery />} />
 					<Route path="/LoginUser" element={<LoginUser />} />
 				</Routes>
 			</BrowserRouter>

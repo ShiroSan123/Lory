@@ -47,16 +47,19 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
 			return;
 		}
 
-		setIsTelegram(true);
+		
 		const telegram = window.Telegram.WebApp;
 		telegram.expand();
 
 		const initDataUnsafe = telegram.initDataUnsafe;
-
+		
+		
 		console.log('initDataUnsafe:', initDataUnsafe);
 		console.log('Ключи initDataUnsafe:', Object.keys(initDataUnsafe));
 
 		if (initDataUnsafe && Object.keys(initDataUnsafe).length > 0) {
+			setIsTelegram(true);
+			console.log("telegram init");
 			setUserData({ ...initDataUnsafe });
 		}
 	}, []);
