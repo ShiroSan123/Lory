@@ -13,4 +13,8 @@ export default {
 			},
 		},
 	},
+	plugins: [
+		react(),
+		tailwindcss(),
+	],
 };
