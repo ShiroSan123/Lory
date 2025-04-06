@@ -8,59 +8,73 @@ import HomePage from './Home';
 import { Dashboard } from './Dashboard';
 import BusinessRegPage from './BusinessReg';
 
-// Тип для возвращаемого значения хука useAuth
-type AuthState = {
-	isAuth: boolean;
-	signIn: (initData: string) => Promise<void>;
-};
+// function App() {
+// 	const [count, setCount] = useState<number>(0); // Тип для count
 
-const useAuth = (): AuthState => {
-	// Состояние с явным указанием типа
-	const [isAuth, setIsAuth] = useState<boolean>(false);
-
-	// Функция signIn с типизацией
-	const signIn = async (initData: string): Promise<void> => {
-		try {
-			const { data } = await axios.post<boolean>(
-				'https://example.com/auth/signin', // URL эндпоинта аутентификации
-				{ initData }, // Передаем данные для входа
-			);
-			setIsAuth(data); // Устанавливаем статус аутентификации
-		} catch (error) {
-			console.error('Ошибка аутентификации:', error);
-		}
-	};
-
-	return { isAuth, signIn };
-};
+// 	return (
+// 		<BrowserRouter>
+// 			<Routes>
+// 				<Route path="/" element={<HomePage />} />
+// 				<Route path="/Dashboard" element={<Dashboard />} />
+// 				<Route path="/BusinessRegPage" element={<BusinessRegPage />} />
+// 			</Routes>
+// 		</BrowserRouter>
+// 	);
+// }
 
 function App() {
-	// const [count, setCount] = useState<number>(0); // Тип для count
-
-	// return (
-	// 	<BrowserRouter>
-	// 		<Routes>
-	// 			<Route path="/" element={<HomePage />} />
-	// 			<Route path="/Dashboard" element={<Dashboard />} />
-	// 			<Route path="/BusinessRegPage" element={<BusinessRegPage />} />
-	// 		</Routes>
-	// 	</BrowserRouter>
-	// );
-	const { isAuth, signIn } = useAuth();
+	const [isTelegram, setIsTelegram] = useState(false);
+	const [userData, setUserData] = useState(null);
 
 	useEffect(() => {
-		// Вызываем signIn при монтировании компонента,
-		// передавая initData из Telegram WebApp API
-		signIn(window.Telegram.WebApp.initData);
+		// Проверка наличия Telegram Web App
+		if (window.Telegram?.WebApp) {
+			setIsTelegram(true);
+			const telegram = window.Telegram.WebApp;
+
+			// Разворачиваем приложение на весь экран
+			telegram.expand();
+
+			// Получаем данные инициализации
+			const initData = telegram.initData; // строка с данными
+			const initDataUnsafe = telegram.initDataUnsafe; // объект с данными
+
+			setUserData(initDataUnsafe);
+
+			// Пример вывода данных в консоль
+			console.log("initData:", initData);
+			console.log("initDataUnsafe:", initDataUnsafe);
+		} else {
+			console.log("Это не Telegram Web App");
+		}
 	}, []);
 
-	// Если пользователь аутентифицирован, показываем соответствующее сообщение
-	if (isAuth) {
-		return <h1>Authenticated</h1>;
-	}
-
-	// Если не аутентифицирован, показываем другое сообщение
-	return <h1>Not Authenticated</h1>;
+	return (
+		<div className="min-h-screen bg-gray-100 flex items-center justify-center">
+			{isTelegram ? (
+				<div className="p-4 bg-white rounded-lg shadow-lg">
+					<h1 className="text-2xl font-bold text-center text-blue-600">
+						Telegram Web App
+					</h1>
+					{userData ? (
+						<div className="mt-4">
+							<p className="text-lg">ID пользователя: {userData.id}</p>
+							<p className="text-lg">Имя: {userData.first_name}</p>
+							<p className="text-lg">
+								Никнейм: @{userData.username || "не указан"}
+							</p>
+						</div>
+					) : (
+						<p className="mt-4 text-gray-600">Загрузка данных...</p>
+					)}
+				</div>
+			) : (
+				<p className="text-red-500 text-lg">
+					Это приложение не запущено в Telegram
+				</p>
+			)}
+		</div>
+	);
 }
 
 export default App;
