@@ -52,18 +52,16 @@ function App() {
 		const telegram = window.Telegram.WebApp;
 		telegram.expand();
 
-		const initData = telegram.initData;
 		const initDataUnsafe = telegram.initDataUnsafe;
 
-		console.log('initData:', initData); // Зашифрованная строка
-		console.log('initDataUnsafe:', initDataUnsafe); // Данные пользователя
+		console.log('initDataUnsafe:', initDataUnsafe);
+		console.log('Ключи initDataUnsafe:', Object.keys(initDataUnsafe));
 
 		if (initDataUnsafe && Object.keys(initDataUnsafe).length > 0) {
-			setUserData(initDataUnsafe);
+			setUserData({ ...initDataUnsafe }); // Копируем объект для явного обновления
 			setDebugMessage('Данные успешно загружены');
 		} else {
 			setDebugMessage('Данные initDataUnsafe пусты');
-			console.log('initDataUnsafe пуст: ', initDataUnsafe);
 		}
 	}, []);
 
@@ -83,6 +81,10 @@ function App() {
 							<p className="text-lg">
 								Никнейм: @{userData.username || 'не указан'}
 							</p>
+							{/* Дополнительно выведем все данные для отладки */}
+							<pre className="mt-4 text-sm text-gray-700">
+								Все данные: {JSON.stringify(userData, null, 2)}
+							</pre>
 						</div>
 					) : (
 						<p className="mt-4 text-gray-600">Данные пользователя не загружены</p>
