@@ -6,7 +6,7 @@ import ProtectedRoute from './server/ProtectedRoute';
 // Pages
 import HomePage from './Home';
 import BusinessRegPage from './BusinessReg';
-import Dashboar from './Dashboard';
+import Dashboard from './Dashboard';
 import RegUser from './RegUser';
 import LoginUser from './LoginUser';
 
@@ -52,7 +52,7 @@ function App() {
 			<BrowserRouter>
 				<Routes>
 					<Route path="/" element={<HomePage />} />
-					<Route path="/Dashboard" element={<ProtectedRoute><Dashboar /></ProtectedRoute>} />
+					<Route path="/Dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 					<Route path="/BusinessRegPage" element={<BusinessRegPage />} />
 					<Route path="/RegUser" element={<RegUser />} />
 					<Route path="/LoginUser" element={<LoginUser />} />

@@ -1,11 +1,16 @@
-function Header({ onToggleLeftSidebar, onToggleRightSidebar }) {
+function Header({ onToggleLeftSidebar, selectedMenu }) {
 	const token = localStorage.getItem("token");
 	const userName = localStorage.getItem("userName");
+
+	const handleLogout = () => {
+		const token = localStorage.getItem("token");
+		const userName = localStorage.getItem("userName");
+		// Add redirect logic here if needed
+	};
 
 	return (
 		<header className="fixed top-0 left-0 right-0 h-16 flex md:gap-4 *:items-center justify-between md:justify-normal bg-white md:bg-inherit">
 			<div className="flex items-center space-x-4 md:w-64 md:pl-6 md:rounded-br-2xl bg-white">
-				{/* Button for left menu (visible only on mobile) */}
 				<button
 					className="md:hidden p-2 rounded-full hover:bg-gray-200"
 					onClick={onToggleLeftSidebar}
@@ -14,21 +19,26 @@ function Header({ onToggleLeftSidebar, onToggleRightSidebar }) {
 					<span>☰</span>
 				</button>
 				{token ? (
-					<a className="text-lg font-bold" href="/dashboard">
-						<p>{userName}</p>
-					</a>
+					<div className="flex items-center gap-4">
+						<a className="text-lg font-bold" href="/dashboard">
+							<p>{userName}</p>
+						</a>
+						<button onClick={handleLogout} className="text-sm text-gray-600">
+							Выйти
+						</button>
+					</div>
 				) : (
 					<a className="text-lg font-bold" href="/BusinessRegPage">
 						Регистрация
 					</a>
 				)}
 			</div>
-			<div className="flex items-center space-x-4 md:rounded-bl-2xl md:w-[calc(100vw-16rem)] bg-white">
+			<div className="flex items-center space-x-4 md:pl-4 md:rounded-bl-2xl md:w-[calc(100vw-16rem)] bg-white">
 				<button
 					className="p-2 rounded-full hover:bg-gray-200"
 					aria-label="Settings"
 				>
-					<span>⚙️</span>
+					<span>{selectedMenu}</span>
 				</button>
 				<button
 					className="p-2 rounded-full hover:bg-gray-200"

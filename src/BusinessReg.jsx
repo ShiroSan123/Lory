@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { FaArrowLeft } from 'react-icons/fa';
 import LogoIcon from '/Logo-ico.svg';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const BusinessRegistration = () => {
+	const token = localStorage.getItem("token");
+	const [isLoading, setIsLoading] = useState(false);
+
 	const [step, setStep] = useState(1);
 	const [formData, setFormData] = useState({
 		businessName: '',
-		businessField: '',
+		businessType: '',
 		businessTerm: '',
 		address: '',
 		city: '',
@@ -14,12 +19,29 @@ const BusinessRegistration = () => {
 		workEmail: '',
 		workTime: '',
 		holidays: '',
+		description: '', // Добавлено для шага 3
+		descriptionAI: '', // Добавлено для шага 3 (генерация ИИ)
+		logo: null, // Для хранения файла логотипа
+		calendar: false, // Для шага 5
+		analytics: false,
+		telegram: false,
+		aiText: false,
+		socials: false,
+		delivery: false,
 	});
+
+	const [responseMessage, setResponseMessage] = useState(''); // Для сообщения об успехе
+	const [error, setError] = useState(''); // Для сообщения об ошибке
 	const steps = ['Начало', 'Информация', 'Описание', 'Логотип', 'Конструктор'];
+	const navigate = useNavigate();
 
 	const handleChange = (e) => {
-		const { name, value } = e.target;
-		setFormData({ ...formData, [name]: value });
+		const { name, value, type, files } = e.target;
+		if (type === 'file') {
+			setFormData({ ...formData, [name]: files[0] }); // Для загрузки файла
+		} else {
+			setFormData({ ...formData, [name]: value });
+		}
 	};
 
 	const nextStep = () => {
@@ -34,14 +56,87 @@ const BusinessRegistration = () => {
 		setStep(stepIndex);
 	};
 
-	const handleSubmit = () => {
-		console.log('Form submitted:', formData);
+	const handleSubmit = async () => {
+		setIsLoading(true);
+		setResponseMessage('');
+		setError('');
+
+		if (!token) {
+			setError('Authorization token is missing. Please log in.');
+			setIsLoading(false);
+			return;
+		}
+
+		console.log('Token before request:', token);
+		const decodedToken = JSON.parse(atob(token.split('.')[1]));
+		console.log('Token expiration:', new Date(decodedToken.exp * 1000));
+		console.log('Current time:', new Date());
+
+		if (decodedToken.exp * 1000 < Date.now()) {
+			setError('Token has expired. Please log in again.');
+			setIsLoading(false);
+			navigate('/login');
+			return;
+		}
+
+		const data = new FormData();
+		data.append('name', formData.businessName);
+		data.append('businessType', formData.businessType || '');
+		// data.append('businessTerm', formData.businessTerm);
+		// data.append('city', formData.city);
+		// data.append('street', formData.street);
+		// data.append('workTime', formData.workTime);
+		// data.append('holidays', formData.holidays);
+		data.append('description', formData.description);
+		// data.append('descriptionAI', formData.descriptionAI);
+		// if (formData.logo) {
+		// 	data.append('logo', formData.logo);
+		// }
+		// data.append('calendar', formData.calendar);
+		// data.append('analytics', formData.analytics);
+		// data.append('telegram', formData.telegram);
+		// data.append('aiText', formData.aiText);
+		// data.append('socials', formData.socials);
+		// data.append('delivery', formData.delivery);
+
+		console.log('Sending data:');
+		for (let [key, value] of data.entries()) {
+			console.log(`${key}: ${value}`);
+		}
+
+		try {
+			const response = await axios.post(
+				`${import.meta.env.VITE_API_BASE_URL}/companies`,
+				data,
+				{
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${token}`,
+					},
+				}
+			);
+			setResponseMessage('Business registered successfully!');
+			console.log('Response:', response.data);
+			setTimeout(() => navigate('/Dashboard'), 2000);
+		} catch (err) {
+			console.error('Server error response:', err.response?.data);
+			setError(
+				err.response?.data?.message || 'Something went wrong. Please try again.'
+			);
+			console.error('Error details:', {
+				message: err.message,
+				status: err.response?.status,
+				data: err.response?.data,
+			});
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
 	const handleRadioToggle = (name) => {
 		setFormData((prev) => ({
 			...prev,
-			[name]: !prev[name], // Toggle the boolean value (true/false)
+			[name]: !prev[name],
 		}));
 	};
 
@@ -55,20 +150,21 @@ const BusinessRegistration = () => {
 	);
 
 	const isStepValid = () => {
-		if (step === 2) return formData.businessName && formData.businessField && formData.businessTerm && formData.workEmail && formData.workTime && formData.holidays;
-		return true; // Другие шаги пока не проверяем
+		if (step === 2) return formData.businessName && formData.businessType !== '';
+		return true;
 	};
 
 	const renderStep = () => {
 		switch (step) {
 			case 1:
 				return (
-					<div className='text-center flex-col'>
+					<div className="text-center flex-col">
 						<Logo />
 						<h2 className="text-xl font-semibold text-black mt-6">Добро пожаловать!</h2>
-						<p className='text-[#858585] w-1/2 mx-auto text-[18px]'>Введите данные о своем бизнесе и начинайте работать в Lory</p>
-						<div className="space-y-4">
-						</div>
+						<p className="text-[#858585] w-1/2 mx-auto text-[18px]">
+							Введите данные о своем бизнесе и начинайте работать в Lory
+						</p>
+						<div className="space-y-4"></div>
 					</div>
 				);
 			case 2:
@@ -86,14 +182,15 @@ const BusinessRegistration = () => {
 									className="w-full h-12 px-4 border border-[#E5E7EB] rounded text-base placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
 								/>
 								<select
-									name="businessField"
-									value={formData.businessField}
+									name="businessType"
+									value={formData.businessType}
 									onChange={handleChange}
 									className="w-full h-12 px-4 border border-[#E5E7EB] rounded text-base text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
 								>
 									<option value="">Сфера бизнеса *</option>
-									<option value="retail">Розничная торговля</option>
-									<option value="service">Услуги</option>
+									<option value="RESTAURANT">Общепит</option>
+									<option value="RESTAURANT">Услуги</option>
+									<option value="RESTAURANT">Недвижимость</option>
 								</select>
 								<select
 									name="businessTerm"
@@ -155,15 +252,15 @@ const BusinessRegistration = () => {
 				);
 			case 3:
 				return (
-					<div className='grid gap-8'>
+					<div className="grid gap-8">
 						<h2 className="text-xl font-semibold text-black mb-6">Описание</h2>
 						<div className="p-6 rounded-[16px] border border-gray-200">
 							<h2 className="text-xl font-medium text-black mb-6">Описание бизнеса</h2>
 							<div className="space-y-4">
 								<input
 									type="text"
-									name="street"
-									value={formData.street}
+									name="description"
+									value={formData.description}
 									onChange={handleChange}
 									placeholder="Описание бизнеса"
 									className="w-full h-12 px-4 border border-[#E5E7EB] rounded text-base placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
@@ -171,19 +268,21 @@ const BusinessRegistration = () => {
 							</div>
 						</div>
 						<button
-							onClick={step}
+							onClick={nextStep}
 							className={`w-full h-14 rounded-[14px] text-white text-base font-medium ${isStepValid()
 								? 'bg-[#0A80E8] hover:bg-[#2563EB]'
 								: 'bg-[#9CA3AF] cursor-not-allowed'
 								} ${step > 1 ? 'ml-auto w-auto px-6' : ''}`}
-						>Выбрать</button>
+						>
+							Выбрать
+						</button>
 						<div className="p-6 rounded-[16px] border border-gray-200">
 							<h2 className="text-xl font-medium text-black mb-6">Генерация ИИ</h2>
 							<div className="space-y-4">
 								<input
 									type="text"
-									name="street"
-									value={formData.street}
+									name="descriptionAI"
+									value={formData.descriptionAI}
 									onChange={handleChange}
 									placeholder="Text that's generated by AI"
 									className="w-full h-12 px-4 border border-[#E5E7EB] rounded text-base placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
@@ -194,8 +293,7 @@ const BusinessRegistration = () => {
 				);
 			case 4:
 				return (
-					<div className='grid gap-8'>
-						{/* <h2 className="text-xl font-semibold text-black mb-6">Логотип бизнеса</h2> */}
+					<div className="grid gap-8">
 						<div className="p-6 rounded-[16px] border border-gray-200">
 							<h2 className="text-xl font-medium text-black mb-6">Логотип бизнеса</h2>
 							<div className="space-y-4">
@@ -234,11 +332,12 @@ const BusinessRegistration = () => {
 							disabled={!isStepValid()}
 							className={`w-full h-14 rounded-[14px] text-white text-base font-medium ${isStepValid()
 								? 'bg-[#0A80E8] hover:bg-[#2563EB]'
-								: 'bg-[#9CA3AF] cursor-not-allowed'}`}>
+								: 'bg-[#9CA3AF] cursor-not-allowed'
+								}`}
+						>
 							Выбрать
 						</button>
 
-						{/* Генерация ИИ Section */}
 						<div className="p-6 rounded-[16px] border border-gray-200">
 							<h2 className="text-xl font-medium text-black mb-6">Генерация ИИ</h2>
 							<div className="space-y-4">
@@ -251,7 +350,6 @@ const BusinessRegistration = () => {
 										</div>
 									</div>
 								</div>
-								{/* Pagination dots */}
 								<div className="flex justify-center mt-4">
 									<span className="w-3 h-3 bg-gray-300 rounded-full mx-1"></span>
 									<span className="w-3 h-3 bg-gray-300 rounded-full mx-1"></span>
@@ -259,23 +357,21 @@ const BusinessRegistration = () => {
 								</div>
 							</div>
 						</div>
-					</div >
+					</div>
 				);
 			case 5:
 				return (
-					<div className='grid gap-8' >
-						{/* Functionality Section */}
+					<div className="grid gap-8">
 						<div className="p-6 rounded-[16px] border border-gray-200">
 							<h2 className="text-xl font-medium text-black mb-6">Функциональность</h2>
 							<div className="space-y-6">
-								{/* Календарь бронирования */}
 								<div className="flex items-center justify-between p-4 bg-gray-50 rounded-[12px]">
 									<label className="text-base font-medium text-gray-700">
 										Календарь бронирования
 									</label>
 									<label className="flex items-center">
 										<input
-											type="radio"
+											type="checkbox"
 											name="calendar"
 											checked={formData.calendar}
 											onChange={() => handleRadioToggle('calendar')}
@@ -283,14 +379,13 @@ const BusinessRegistration = () => {
 										/>
 									</label>
 								</div>
-								{/* Аналитика */}
 								<div className="flex items-center justify-between p-4 bg-gray-50 rounded-[12px]">
 									<label className="text-base font-medium text-gray-700">
 										Аналитика
 									</label>
 									<label className="flex items-center">
 										<input
-											type="radio"
+											type="checkbox"
 											name="analytics"
 											checked={formData.analytics}
 											onChange={() => handleRadioToggle('analytics')}
@@ -298,15 +393,13 @@ const BusinessRegistration = () => {
 										/>
 									</label>
 								</div>
-
-								{/* Уведомление и поддержка через Telegram */}
 								<div className="flex items-center justify-between p-4 bg-gray-50 rounded-[12px]">
 									<label className="text-base font-medium text-gray-700">
 										Уведомление и поддержка через Telegram
 									</label>
 									<label className="flex items-center">
 										<input
-											type="radio"
+											type="checkbox"
 											name="telegram"
 											checked={formData.telegram}
 											onChange={() => handleRadioToggle('telegram')}
@@ -314,15 +407,13 @@ const BusinessRegistration = () => {
 										/>
 									</label>
 								</div>
-
-								{/* Генерация текста и изображений LoryAI */}
 								<div className="flex items-center justify-between p-4 bg-gray-50 rounded-[12px]">
 									<label className="text-base font-medium text-gray-700">
 										Генерация текста и изображений LoryAI
 									</label>
 									<label className="flex items-center">
 										<input
-											type="radio"
+											type="checkbox"
 											name="aiText"
 											checked={formData.aiText}
 											onChange={() => handleRadioToggle('aiText')}
@@ -330,15 +421,13 @@ const BusinessRegistration = () => {
 										/>
 									</label>
 								</div>
-
-								{/* Соцсети */}
 								<div className="flex items-center justify-between p-4 bg-gray-50 rounded-[12px]">
 									<label className="text-base font-medium text-gray-700">
 										Соцсети
 									</label>
 									<label className="flex items-center">
 										<input
-											type="radio"
+											type="checkbox"
 											name="socials"
 											checked={formData.socials}
 											onChange={() => handleRadioToggle('socials')}
@@ -346,15 +435,13 @@ const BusinessRegistration = () => {
 										/>
 									</label>
 								</div>
-
-								{/* Зона доставки */}
 								<div className="flex items-center justify-between p-4 bg-gray-50 rounded-[12px]">
 									<label className="text-base font-medium text-gray-700">
 										Зона доставки
 									</label>
 									<label className="flex items-center">
 										<input
-											type="radio"
+											type="checkbox"
 											name="delivery"
 											checked={formData.delivery}
 											onChange={() => handleRadioToggle('delivery')}
@@ -364,7 +451,7 @@ const BusinessRegistration = () => {
 								</div>
 							</div>
 						</div>
-					</div >
+					</div>
 				);
 			default:
 				return null;
@@ -390,49 +477,45 @@ const BusinessRegistration = () => {
 								onClick={() => goToStep(stepIndex)}
 								className="flex-1 flex gap-2 items-center relative cursor-pointer"
 							>
-								{/* Круг */}
 								<div
-									className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${isCompleted
-										? 'border-[#00A445]'
-										: isCurrent
-											? ''
-											: ''
+									className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${isCompleted ? 'border-[#00A445]' : isCurrent ? '' : ''
 										} z-10`}
 								>
 									<span
-										className={`text-[14px] font-medium ${isCompleted
-											? 'text-[#00A445]'
-											: isCurrent
-												? ''
-												: ''
+										className={`text-[14px] font-medium ${isCompleted ? 'text-[#00A445]' : isCurrent ? '' : ''
 											}`}
 									>
 										{isCompleted ? '✓' : stepIndex}
 									</span>
 								</div>
-								{/* Текст под кругом */}
 								<span
 									className={`text-xs text-center ${isCompleted ? 'text-[#00A445]' : 'text-black'
 										}`}
 								>
 									{label}
 								</span>
-							</div >
+							</div>
 						);
 					})}
-				</div >
+				</div>
 				<div className="">
 					{renderStep()}
 					<div className="flex-col text-center justify-between mt-6">
+						{/* Сообщения об успехе или ошибке */}
+						{responseMessage && (
+							<p className="text-green-600 text-center mb-4">{responseMessage}</p>
+						)}
+						{error && <p className="text-red-600 text-center mb-4">{error}</p>}
+
 						<button
 							onClick={step === 5 ? handleSubmit : nextStep}
-							disabled={!isStepValid()}
-							className={`w-full h-14 rounded-[14px] text-white text-base font-medium ${isStepValid()
+							disabled={!isStepValid() || isLoading}
+							className={`w-full h-14 rounded-[14px] text-white text-base font-medium ${isStepValid() && !isLoading
 								? 'bg-[#0A80E8] hover:bg-[#2563EB]'
 								: 'bg-[#9CA3AF] cursor-not-allowed'
 								} ${step > 1 ? 'ml-auto w-auto px-6' : ''}`}
 						>
-							{step === 1 ? 'Перейти к регистрации' : step === 3 ? 'Выбрать' : 'Далее'}
+							{isLoading ? 'Loading...' : step === 1 ? 'Перейти к регистрации' : step === 5 ? 'Зарегистрировать' : 'Далее'}
 						</button>
 						{step === 1 ? (
 							<p className="text-[#858585] text-[14px]">
@@ -441,8 +524,8 @@ const BusinessRegistration = () => {
 						) : null}
 					</div>
 				</div>
-			</div >
-		</div >
+			</div>
+		</div>
 	);
 };
 

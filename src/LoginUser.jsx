@@ -36,20 +36,16 @@ const LoginUser = () => {
 
 			console.log("Response data:", response.data);
 
-			const { accessToken, user } = response.data; // Извлекаем accessToken и user
-			if (accessToken && user) {
-				localStorage.setItem("token", accessToken);
-				localStorage.setItem("userEmail", user.email); // Сохраняем email
-				localStorage.setItem("userName", user.name || ""); // Сохраняем name (если есть)
-
+			const { accessToken } = response.data; // Извлекаем accessToken вместо token
+			const { user } = response.data; // Извлекаем accessToken вместо token
+			if (accessToken) {
+				localStorage.setItem("token", accessToken); // Сохраняем accessToken
+				localStorage.setItem("user", user); // Сохраняем User
 				console.log("Saved token:", localStorage.getItem("token"));
-				console.log("Saved user email:", localStorage.getItem("userEmail"));
-				console.log("Saved user name:", localStorage.getItem("userName"));
-
 				setResponseMessage("Login successful!");
 				setTimeout(() => navigate("/"), 2000);
 			} else {
-				setError("No access token or user data received from server.");
+				setError("No access token received from server.");
 			}
 		} catch (err) {
 			setError(err.response?.data?.message || "Login failed. Please try again.");
