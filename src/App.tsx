@@ -1,53 +1,37 @@
-import React, { useState, useEffect } from 'react'; // Добавлен импорт React
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { BrowserRouter, Routes, Route } from 'react-router-dom'; // Убраны дубликаты импортов
 import './index.css';
-
-// Pages
-import HomePage from './Home';
-import { Dashboard } from './Dashboard';
-import BusinessRegPage from './BusinessReg';
-
-// function App() {
-// 	const [count, setCount] = useState<number>(0); // Тип для count
-
-// 	return (
-// 		<BrowserRouter>
-// 			<Routes>
-// 				<Route path="/" element={<HomePage />} />
-// 				<Route path="/Dashboard" element={<Dashboard />} />
-// 				<Route path="/BusinessRegPage" element={<BusinessRegPage />} />
-// 			</Routes>
-// 		</BrowserRouter>
-// 	);
-// }
 
 function App() {
 	const [isTelegram, setIsTelegram] = useState(false);
 	const [userData, setUserData] = useState(null);
+	const [authError, setAuthError] = useState(null);
 
 	useEffect(() => {
-		// Проверка наличия Telegram Web App
 		if (window.Telegram?.WebApp) {
 			setIsTelegram(true);
 			const telegram = window.Telegram.WebApp;
-
-			// Разворачиваем приложение на весь экран
 			telegram.expand();
-
-			// Получаем данные инициализации
-			const initData = telegram.initData; // строка с данными
-			const initDataUnsafe = telegram.initDataUnsafe; // объект с данными
-
+			const initDataUnsafe = telegram.initDataUnsafe;
 			setUserData(initDataUnsafe);
-
-			// Пример вывода данных в консоль
-			console.log("initData:", initData);
 			console.log("initDataUnsafe:", initDataUnsafe);
 		} else {
 			console.log("Это не Telegram Web App");
 		}
 	}, []);
+
+	const signIn = async () => {
+		try {
+			const response = await axios.post('https://example.com/auth/signin', {
+				username: 'test',
+				password: 'password',
+			});
+			console.log('Успех:', response.data);
+		} catch (error) {
+			console.error('Ошибка аутентификации:', error);
+			setAuthError(error.message);
+		}
+	};
 
 	return (
 		<div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -63,6 +47,13 @@ function App() {
 							<p className="text-lg">
 								Никнейм: @{userData.username || "не указан"}
 							</p>
+							<button
+								onClick={signIn}
+								className="mt-4 bg-blue-500 text-white p-2 rounded"
+							>
+								Войти
+							</button>
+							{authError && <p className="text-red-500 mt-2">{authError}</p>}
 						</div>
 					) : (
 						<p className="mt-4 text-gray-600">Загрузка данных...</p>
