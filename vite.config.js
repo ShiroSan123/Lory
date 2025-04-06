@@ -6,12 +6,12 @@ import tailwindcss from '@tailwindcss/vite'
 export default {
 	server: {
 		proxy: {
-			'/auth': {
-				target: 'https://example.com',
+			'/api': {
+				target: 'http://localhost:4200',
 				changeOrigin: true,
-				secure: false, // Если SSL-сертификат невалидный
 			},
 		},
+		port: 4200
 	},
 	plugins: [
 		react(),

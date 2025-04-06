@@ -5,6 +5,7 @@ import { useTelegram } from '../context/TelegramContext';
 
 const Header = () => {
 	const { userData } = useTelegram();
+	const token = localStorage.getItem("token");
 
 	return (
 		<header className="flex items-center px-4 py-3 bg-white shadow-md md:px-6 lg:px-8 relative">
@@ -25,17 +26,14 @@ const Header = () => {
 
 			{/* Правая часть: кнопка "Регистрация" */}
 			<a href='/BusinessRegPage' className='absolute right-5'>
-				{/* <button className="text-sm font-medium text-gray-700 hover:text-blue-500 transition-colors sm:text-base lg:text-lg">
-					Регистрация
-				</button> */}
-				{userData && userData.user ? (
-					<div className="mt-4">
-						<p className="text-lg">ID пользователя: {userData.user.id || 'не указан'}</p>
-						<p className="text-lg">Имя: {userData.user.first_name || 'не указано'}</p>
-						<p className="text-lg">Никнейм: @{userData.user.username || 'не указан'}</p>
-					</div>
+				{token === null ? (
+					<a href='/RegUser'><button className="text-sm font-medium text-gray-700 hover:text-blue-500 transition-colors sm:text-base lg:text-lg">
+						Регистрация
+					</button></a>
 				) : (
-					<p className="mt-4 text-gray-600">Данные пользователя не загружены</p>
+					<a href='/Dashboard'><button className="text-sm font-medium text-gray-700 hover:text-blue-500 transition-colors sm:text-base lg:text-lg">
+						CRM
+					</button></a>
 				)}
 			</a>
 		</header>
