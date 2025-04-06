@@ -22,17 +22,31 @@ import BusinessRegPage from './BusinessReg';
 // 	);
 // }
 
+// Интерфейс для пользователя Telegram
 interface TelegramUser {
-	id?: number;
-	first_name?: string;
-	last_name?: string;
-	username?: string;
-	[key: string]: any;
+	id: number;
+	first_name: string;
+	last_name: string;
+	username: string;
+	language_code?: string;
+	is_premium?: boolean;
+	allows_write_to_pm?: boolean;
+	photo_url?: string;
+}
+
+// Интерфейс для initDataUnsafe
+interface InitDataUnsafe {
+	user: TelegramUser;
+	chat_instance?: string;
+	chat_type?: string;
+	auth_date?: string;
+	signature?: string;
+	hash?: string;
 }
 
 function App() {
 	const [isTelegram, setIsTelegram] = useState(false);
-	const [userData, setUserData] = useState<TelegramUser | null>(null);
+	const [userData, setUserData] = useState<InitDataUnsafe | null>(null);
 	const [debugMessage, setDebugMessage] = useState<string>('');
 
 	useEffect(() => {
@@ -58,7 +72,7 @@ function App() {
 		console.log('Ключи initDataUnsafe:', Object.keys(initDataUnsafe));
 
 		if (initDataUnsafe && Object.keys(initDataUnsafe).length > 0) {
-			setUserData({ ...initDataUnsafe }); // Копируем объект для явного обновления
+			setUserData({ ...initDataUnsafe });
 			setDebugMessage('Данные успешно загружены');
 		} else {
 			setDebugMessage('Данные initDataUnsafe пусты');
@@ -73,15 +87,24 @@ function App() {
 						Telegram Web App
 					</h1>
 					<p className="mt-2 text-gray-600">Отладка: {debugMessage}</p>
-					{userData ? (
+					{userData && userData.user ? (
 						<div className="mt-4">
-							<p className="text-lg">ID пользователя: {userData.id || 'не указан'}</p>
-							<p className="text-lg">Имя: {userData.first_name || 'не указано'}</p>
-							<p className="text-lg">Фамилия: {userData.last_name || 'не указана'}</p>
+							<p className="text-lg">ID пользователя: {userData.user.id || 'не указан'}</p>
+							<p className="text-lg">Имя: {userData.user.first_name || 'не указано'}</p>
+							<p className="text-lg">Фамилия: {userData.user.last_name || 'не указана'}</p>
 							<p className="text-lg">
-								Никнейм: @{userData.username || 'не указан'}
+								Никнейм: @{userData.user.username || 'не указан'}
 							</p>
-							{/* Дополнительно выведем все данные для отладки */}
+							{/* Дополнительные поля */}
+							<p className="text-lg">Язык: {userData.user.language_code || 'не указан'}</p>
+							<p className="text-lg">Премиум: {userData.user.is_premium ? 'Да' : 'Нет'}</p>
+							{userData.user.photo_url && (
+								<img
+									src={userData.user.photo_url}
+									alt="Аватар"
+									className="mt-2 w-20 h-20 rounded-full"
+								/>
+							)}
 							<pre className="mt-4 text-sm text-gray-700">
 								Все данные: {JSON.stringify(userData, null, 2)}
 							</pre>
