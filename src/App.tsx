@@ -22,38 +22,37 @@ import BusinessRegPage from './BusinessReg';
 // 	);
 // }
 
+interface TelegramUser {
+	id?: number;
+	first_name?: string;
+	last_name?: string;
+	username?: string;
+	[key: string]: any;
+}
+
 function App() {
 	const [isTelegram, setIsTelegram] = useState(false);
-	const [userData, setUserData] = useState<any>(null); // Или опиши тип точнее
-	const [authError, setAuthError] = useState<string | null>(null);
+	const [userData, setUserData] = useState<TelegramUser | null>(null);
 
 	useEffect(() => {
+		console.log("Проверка Telegram:", window.Telegram);
 		if (window.Telegram?.WebApp) {
 			setIsTelegram(true);
 			const telegram = window.Telegram.WebApp;
 			telegram.expand();
 			const initData = telegram.initData;
 			const initDataUnsafe = telegram.initDataUnsafe;
-			setUserData(initDataUnsafe);
 			console.log("initData:", initData);
 			console.log("initDataUnsafe:", initDataUnsafe);
+			if (initDataUnsafe && Object.keys(initDataUnsafe).length > 0) {
+				setUserData(initDataUnsafe);
+			} else {
+				console.log("Данные initDataUnsafe пусты");
+			}
 		} else {
 			console.log("Это не Telegram Web App");
 		}
 	}, []);
-
-	const signIn = async () => {
-		try {
-			const response = await axios.post('https://example.com/auth/signin', {
-				username: 'test',
-				password: 'password',
-			});
-			console.log('Успех:', response.data);
-		} catch (error: any) {
-			console.error('Ошибка аутентификации:', error);
-			setAuthError(error.message);
-		}
-	};
 
 	return (
 		<div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -64,21 +63,14 @@ function App() {
 					</h1>
 					{userData ? (
 						<div className="mt-4">
-							<p className="text-lg">ID пользователя: {userData.id}</p>
-							<p className="text-lg">Имя: {userData.first_name}</p>
+							<p className="text-lg">ID пользователя: {userData.id || "не указан"}</p>
+							<p className="text-lg">Имя: {userData.first_name || "не указано"}</p>
 							<p className="text-lg">
 								Никнейм: @{userData.username || "не указан"}
 							</p>
-							<button
-								onClick={signIn}
-								className="mt-4 bg-blue-500 text-white p-2 rounded"
-							>
-								Войти
-							</button>
-							{authError && <p className="text-red-500 mt-2">{authError}</p>}
 						</div>
 					) : (
-						<p className="mt-4 text-gray-600">Загрузка данных...</p>
+						<p className="mt-4 text-gray-600">Данные не загружены. Проверь консоль.</p>
 					)}
 				</div>
 			) : (
