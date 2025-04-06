@@ -33,24 +33,37 @@ interface TelegramUser {
 function App() {
 	const [isTelegram, setIsTelegram] = useState(false);
 	const [userData, setUserData] = useState<TelegramUser | null>(null);
+	const [debugMessage, setDebugMessage] = useState<string>('');
 
 	useEffect(() => {
-		console.log("Проверка Telegram:", window.Telegram);
-		if (window.Telegram?.WebApp) {
-			setIsTelegram(true);
-			const telegram = window.Telegram.WebApp;
-			telegram.expand();
-			const initData = telegram.initData;
-			const initDataUnsafe = telegram.initDataUnsafe;
-			console.log("initData:", initData);
-			console.log("initDataUnsafe:", initDataUnsafe);
-			if (initDataUnsafe && Object.keys(initDataUnsafe).length > 0) {
-				setUserData(initDataUnsafe);
-			} else {
-				console.log("Данные initDataUnsafe пусты");
-			}
+		if (!window.Telegram) {
+			setDebugMessage('Скрипт Telegram не загружен или это не Web App');
+			console.log('window.Telegram отсутствует');
+			return;
+		}
+
+		if (!window.Telegram.WebApp) {
+			setDebugMessage('Telegram.WebApp не инициализирован');
+			console.log('Telegram.WebApp отсутствует');
+			return;
+		}
+
+		setIsTelegram(true);
+		const telegram = window.Telegram.WebApp;
+		telegram.expand();
+
+		const initData = telegram.initData;
+		const initDataUnsafe = telegram.initDataUnsafe;
+
+		console.log('initData:', initData); // Зашифрованная строка
+		console.log('initDataUnsafe:', initDataUnsafe); // Данные пользователя
+
+		if (initDataUnsafe && Object.keys(initDataUnsafe).length > 0) {
+			setUserData(initDataUnsafe);
+			setDebugMessage('Данные успешно загружены');
 		} else {
-			console.log("Это не Telegram Web App");
+			setDebugMessage('Данные initDataUnsafe пусты');
+			console.log('initDataUnsafe пуст: ', initDataUnsafe);
 		}
 	}, []);
 
@@ -61,16 +74,18 @@ function App() {
 					<h1 className="text-2xl font-bold text-center text-blue-600">
 						Telegram Web App
 					</h1>
+					<p className="mt-2 text-gray-600">Отладка: {debugMessage}</p>
 					{userData ? (
 						<div className="mt-4">
-							<p className="text-lg">ID пользователя: {userData.id || "не указан"}</p>
-							<p className="text-lg">Имя: {userData.first_name || "не указано"}</p>
+							<p className="text-lg">ID пользователя: {userData.id || 'не указан'}</p>
+							<p className="text-lg">Имя: {userData.first_name || 'не указано'}</p>
+							<p className="text-lg">Фамилия: {userData.last_name || 'не указана'}</p>
 							<p className="text-lg">
-								Никнейм: @{userData.username || "не указан"}
+								Никнейм: @{userData.username || 'не указан'}
 							</p>
 						</div>
 					) : (
-						<p className="mt-4 text-gray-600">Данные не загружены. Проверь консоль.</p>
+						<p className="mt-4 text-gray-600">Данные пользователя не загружены</p>
 					)}
 				</div>
 			) : (
