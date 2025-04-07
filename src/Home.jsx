@@ -10,15 +10,6 @@ import { useTelegram } from './context/TelegramContext';
 
 
 const HomePage = () => {
-
-	const { isTelegram } = useTelegram();
-	const navigate = useNavigate();
-	
-	useEffect(() => {
-		if (isTelegram) {
-		  navigate('/gallery');
-		}
-	  }, [isTelegram, navigate]);
 	return (
 		<>
 			<Header />
