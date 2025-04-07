@@ -2,7 +2,7 @@ import { useTelegram } from './context/TelegramContext';
 
 const TelegramProfile = () => {
   const { userData } = useTelegram();
-
+  
   if (!userData || !userData.user) {
     return (
       <div>
@@ -16,6 +16,7 @@ const TelegramProfile = () => {
 
   return (
     <div>
+      <button onClick={alert(userData)}>info</button>
       <h1>Профиль пользователя Telegram</h1>
       <p><strong>ID:</strong> {user.id}</p>
       <p><strong>Имя:</strong> {user.first_name}</p>
