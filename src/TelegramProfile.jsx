@@ -16,7 +16,7 @@ const TelegramProfile = () => {
 
   return (
     <div>
-      <button onClick={alert(userData)}>info</button>
+      <button onClick={() => alert(JSON.stringify(userData, null, 2))}>info</button>
       <h1>Профиль пользователя Telegram</h1>
       <p><strong>ID:</strong> {user.id}</p>
       <p><strong>Имя:</strong> {user.first_name}</p>

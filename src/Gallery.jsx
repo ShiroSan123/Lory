@@ -8,8 +8,7 @@ const Gallery = () =>{
 		<>
 		zaebis
 		<br></br>
-			<button onClick={
-		  navigate('/TelegramProfile')}>ProfileClick</button>
+		<button onClick={() => navigate('/TelegramProfile')}>ProfileClick</button>
 		</>
 	);
 }
