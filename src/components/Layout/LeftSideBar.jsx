@@ -35,6 +35,7 @@ function LeftSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 					{/* Стрелка для индикации состояния */}
 					<span className="ml-auto">{isNotificationsOpen ? '▼' : '▶'}</span>
 				</div>
+				<a href="/BusinessRegPage">зарегестировать бизнес</a>
 			</nav>
 
 			{/* Условное отображение нижней части */}
