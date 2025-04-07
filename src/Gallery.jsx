@@ -11,7 +11,7 @@ const Gallery = () => {
   // Запрос авторизации через Telegram
   useEffect(() => {
     if (userData) {
-      fetch('https://bims14.ru/auth/telegram', {
+      fetch('https://bims14.ru/api/auth/telegram', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -35,7 +35,7 @@ const Gallery = () => {
  
   // Запрос списка компаний
   useEffect(() => {
-    fetch('{{BASE_URL}}/catalog/companies')
+    fetch('https://bims14.ru/api/catalog/companies')
       .then(response => response.json())
       .then(data => {
         setCompanies(data);
