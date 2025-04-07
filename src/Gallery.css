@@ -1,0 +1,62 @@
+.gallery-container {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .telegram-auth {
+    margin-bottom: 30px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+  }
+  
+  .telegram-auth h2 {
+    margin-bottom: 10px;
+  }
+  
+  .telegram-auth button {
+    padding: 8px 16px;
+    background-color: #007bff;
+    border: none;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .telegram-auth button:hover {
+    background-color: #0056b3;
+  }
+  
+  .companies {
+    padding: 10px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+  }
+  
+  .companies h2 {
+    margin-bottom: 10px;
+  }
+  
+  .company-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .company-item {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+  }
+  
+  .company-item:last-child {
+    border-bottom: none;
+  }
+  
+  .company-item h3 {
+    margin: 0 0 5px;
+  }
+  
+  .company-item p {
+    margin: 5px 0;
+  }
+  
