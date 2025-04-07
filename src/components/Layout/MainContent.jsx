@@ -1,29 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 
-export function MainContent({ selectedMenu, isLoading = false }) {
-	const [formData, setFormData] = useState({
-		company_name: '',
-		industry: '',
-		description: ''
-	});
-	const [responseMessage, setResponseMessage] = useState('');
-	const [error, setError] = useState('');
-	const [localLoading, setLocalLoading] = useState(false);
-	const navigate = useNavigate();
-
-	// For this example, we'll assume token is stored in localStorage
-	const token = localStorage.getItem('authToken');
-
-	const handleInputChange = (e) => {
-		const { name, value } = e.target;
-		setFormData(prev => ({
-			...prev,
-			[name]: value
-		}));
-	};
-
+export function MainContent({ selectedMenu, isLoading = false, isSidebarOpen }) {
 	const renderMainContent = () => {
 		switch (selectedMenu) {
 			case 'Главная':
@@ -45,14 +22,10 @@ export function MainContent({ selectedMenu, isLoading = false }) {
 
 	return (
 		<main
-			className="fixed top-20 md:left-4 w-full rounded-2xl bg-white px-4 md:pt-2 md:px-6 md:ml-64 h-[calc(100vh-5rem)] overflow-y-auto"
+			className={`fixed rounded-2xl bg-white px-4 md:pt-2 md:px-6 md:left-0 w-full md:w-[calc(100vw-17rem)] h-[calc(100vh-5rem)] overflow-y-auto ${isSidebarOpen ? 'translate-x-full' : '-translate-x-0'} md:translate-x-0 z-10`}
 		>
 			<h1 className="text-xl sm:text-2xl font-bold mb-6">Дашборд</h1>
-			{isLoading || localLoading ? (
-				<div className="p-4">Loading...</div>
-			) : (
-				renderMainContent()
-			)}
+			{isLoading ? <div className="p-4">Loading...</div> : renderMainContent()}
 		</main>
 	);
 }

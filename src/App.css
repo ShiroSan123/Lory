@@ -1,3 +1,37 @@
 body {
 	background: #F7F7F9;
 }
+
+@media (max-width: 768px) {
+
+	/* По умолчанию показываем только RightSidebar */
+	aside {
+		width: 100% !important;
+		transform: translateX(0);
+	}
+
+	main {
+		transform: translateX(-100%);
+	}
+
+	/* Когда MainContent открыт */
+	.open main {
+		transform: translateX(0);
+	}
+
+	.open aside {
+		transform: translateX(100%);
+	}
+}
+
+@media (min-width: 769px) {
+
+	/* На десктопе оба элемента видны */
+	aside {
+		transform: translateX(0) !important;
+	}
+
+	main {
+		transform: translateX(0) !important;
+	}
+}

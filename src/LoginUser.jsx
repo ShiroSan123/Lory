@@ -36,11 +36,13 @@ const LoginUser = () => {
 
 			console.log("Response data:", response.data);
 
-			const { accessToken } = response.data; // Извлекаем accessToken вместо token
-			const { user } = response.data; // Извлекаем accessToken вместо token
+			const { accessToken } = response.data;
+			const { user } = response.data;
+			const { id } = response.data;
 			if (accessToken) {
 				localStorage.setItem("token", accessToken); // Сохраняем accessToken
 				localStorage.setItem("user", user); // Сохраняем User
+				localStorage.setItem("id", id); // Сохраняем Id
 				console.log("Saved token:", localStorage.getItem("token"));
 				setResponseMessage("Login successful!");
 				setTimeout(() => navigate("/"), 2000);
