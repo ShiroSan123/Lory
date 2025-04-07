@@ -1,4 +1,4 @@
-import { useTelegram } from './TelegramContext';
+import { useTelegram } from './context/TelegramContext';
 
 const TelegramProfile = () => {
   const { userData } = useTelegram();
