@@ -58,10 +58,30 @@ const BusinessRegistration = () => {
 			return;
 		}
 
+		// Создаем объект FormData и добавляем все поля из formData
 		const data = new FormData();
 		data.append('name', formData.businessName);
+		data.append('description', formData.description || '');
 		data.append('businessType', formData.businessType || '');
-		data.append('description', formData.descriptionAI);
+		data.append('businessTerm', formData.businessTerm || '');
+		data.append('city', formData.city || '');
+		data.append('street', formData.street || '');
+		data.append('workTime', formData.workTime || '');
+		data.append('holidays', formData.holidays || '');
+		data.append('descriptionAI', formData.descriptionAI || '');
+
+		// Добавляем файл logo, если он есть
+		if (formData.logo) {
+			data.append('logo', formData.logo);
+		}
+
+		// Добавляем булевы значения (преобразуем в строки, так как FormData работает со строками)
+		data.append('calendar', formData.calendar.toString());
+		data.append('analytics', formData.analytics.toString());
+		data.append('telegram', formData.telegram.toString());
+		data.append('aiText', formData.aiText.toString());
+		data.append('socials', formData.socials.toString());
+		data.append('delivery', formData.delivery.toString());
 
 		try {
 			const response = await axios.post(
@@ -69,8 +89,8 @@ const BusinessRegistration = () => {
 				data,
 				{
 					headers: {
-						'Content-Type': 'application/json',
 						'Authorization': `Bearer ${token}`,
+						'Content-Type': 'application/json',
 					},
 				}
 			);
@@ -303,13 +323,6 @@ const BusinessRegistration = () => {
 								)}
 							</form>
 						</div>
-						{/* <button
-							onClick={nextStep}
-							className={`w-full h-14 rounded-[14px] text-white text-base font-medium ${isStepValid() ? 'bg-[#0A80E8] hover:bg-[#2563EB]' : 'bg-[#9CA3AF] cursor-not-allowed'
-								}`}
-						>
-							Далее
-						</button> */}
 					</div>
 				);
 			case 4:
@@ -382,7 +395,47 @@ const BusinessRegistration = () => {
 										className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500"
 									/>
 								</div>
-								{/* Другие чекбоксы опущены для краткости */}
+								{/* Добавляем остальные чекбоксы, которые были опущены в исходном коде */}
+								<div className="flex items-center justify-between p-4 bg-gray-50 rounded-[12px]">
+									<label className="text-base font-medium text-gray-700">Telegram</label>
+									<input
+										type="checkbox"
+										name="telegram"
+										checked={formData.telegram}
+										onChange={() => handleRadioToggle('telegram')}
+										className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500"
+									/>
+								</div>
+								<div className="flex items-center justify-between p-4 bg-gray-50 rounded-[12px]">
+									<label className="text-base font-medium text-gray-700">Генерация ИИ</label>
+									<input
+										type="checkbox"
+										name="aiText"
+										checked={formData.aiText}
+										onChange={() => handleRadioToggle('aiText')}
+										className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500"
+									/>
+								</div>
+								<div className="flex items-center justify-between p-4 bg-gray-50 rounded-[12px]">
+									<label className="text-base font-medium text-gray-700">Соцсети</label>
+									<input
+										type="checkbox"
+										name="socials"
+										checked={formData.socials}
+										onChange={() => handleRadioToggle('socials')}
+										className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500"
+									/>
+								</div>
+								<div className="flex items-center justify-between p-4 bg-gray-50 rounded-[12px]">
+									<label className="text-base font-medium text-gray-700">Доставка</label>
+									<input
+										type="checkbox"
+										name="delivery"
+										checked={formData.delivery}
+										onChange={() => handleRadioToggle('delivery')}
+										className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500"
+									/>
+								</div>
 							</div>
 						</div>
 					</div>
