@@ -1,44 +1,78 @@
 import { useState, useEffect, useRef } from 'react';
+import axios from 'axios'; // Добавляем импорт axios
 
-export function MainContent({ selectedMenu, isLoading = false, isSidebarOpen }) {
-	// Создаем ссылку на элемент <main>
+export function MainContent({ selectedMenu, isLoading = false, isSidebarOpen, selectedEmployee }) {
 	const mainRef = useRef(null);
 
-	// Состояние для хранения истории сообщений
 	const [messages, setMessages] = useState([
 		{
 			sender: 'bot',
 			text: 'Привет, я твой помощник LoryAI! Я могу генерировать текст и фото для вашей компании',
 		},
 	]);
+
+	const products = [
+		{
+			id: 1,
+			image: '/images/cherry.jpeg', // Замените на реальный путь к изображению
+			title: 'Зимняя вишня',
+			description: 'Стрижка женская, Яркий акцент на челке, стильный рисунок сзади.',
+			price: 650,
+		},
+		{
+			id: 2,
+			image: '/images/crop.jpeg',
+			title: 'Кроп',
+			description: 'Стрижка мужская. стильная. подойдет для многих мужчин',
+			price: 650,
+		},
+		{
+			id: 3,
+			image: '/images/mallet.jpeg',
+			title: 'Маллет',
+			description: 'Стрижка мужская. самая крутая. подойдет для всех',
+			price: 650,
+		},
+	];
+
 	const [inputText, setInputText] = useState('');
 
 	// Функция для отправки сообщения
-	const handleSendMessage = () => {
-		if (inputText.trim() === '') return;
+	const handleSendMessage = async () => {
+		if (!inputText.trim()) return; // Проверяем, что текст не пустой
 
 		// Добавляем сообщение пользователя в историю
-		setMessages([...messages, { sender: 'user', text: inputText }]);
-
-		// Имитация ответа бота
-		setTimeout(() => {
-			let botResponse = 'Я пока не знаю, как на это ответить, но я учусь! 😊';
-			if (inputText.toLowerCase().includes('мужская стрижка')) {
-				botResponse =
-					'Конечно, вот результаты генерации фото для рекламного продвижения товара "Мужская стрижка" на которой является мужчина';
-			} else if (inputText.toLowerCase().includes('чем можешь помочь')) {
-				botResponse =
-					'Я могу помочь с генерацией текста и фото для вашей компании. Например, могу создать рекламные материалы или ответить на вопросы!';
-			}
-
-			setMessages((prevMessages) => [
-				...prevMessages,
-				{ sender: 'bot', text: botResponse },
-			]);
-		}, 500);
+		const userMessage = { sender: 'user', text: inputText };
+		setMessages((prevMessages) => [...prevMessages, userMessage]);
 
 		// Очищаем поле ввода
 		setInputText('');
+
+		try {
+			// Отправляем запрос на сервер
+			const response = await axios.post(
+				'https://my-vercel-server-eduards-projects-e1b5b4e2.vercel.app/api/chat',
+				{ message: inputText }, // Предполагаем, что сервер ожидает поле message
+				{
+					headers: {
+						'Authorization': 'Bearer a8f3cd34d3ad67e1f4b3f1a8d3cc432f9b2f9c9ac4d84c79e0d40a8c9ef0c8dd',
+						'Content-Type': 'application/json',
+					},
+				}
+			);
+
+			// Добавляем ответ бота в историю
+			const botMessage = { sender: 'bot', text: response.data.response || 'Ответ от сервера' };
+			console.log(response.data.response)
+			setMessages((prevMessages) => [...prevMessages, botMessage]);
+		} catch (err) {
+			console.error('Ошибка при отправке сообщения:', err);
+			const errorMessage = {
+				sender: 'bot',
+				text: 'Произошла ошибка. Попробуйте снова.',
+			};
+			setMessages((prevMessages) => [...prevMessages, errorMessage]);
+		}
 	};
 
 	// Обработчик нажатия Enter
@@ -48,18 +82,16 @@ export function MainContent({ selectedMenu, isLoading = false, isSidebarOpen }) 
 		}
 	};
 
-	// Функция для прокрутки вниз
+	// Прокрутка вниз
 	const scrollToBottom = () => {
 		if (mainRef.current) {
 			mainRef.current.scrollTop = mainRef.current.scrollHeight;
 		}
 	};
 
-	// Прокручиваем вниз при изменении selectedMenu
 	useEffect(() => {
 		scrollToBottom();
-	}, [selectedMenu]);
-
+	}, [messages, selectedMenu]); // Добавляем messages в зависимости, чтобы прокручивать при новых сообщениях
 	const renderMainContent = () => {
 		switch (selectedMenu) {
 			case 'LoryAI':
@@ -81,13 +113,10 @@ export function MainContent({ selectedMenu, isLoading = false, isSidebarOpen }) 
 							{messages.map((message, index) => (
 								<div
 									key={index}
-									className={`mb-4 flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'
-										}`}
+									className={`mb-4 flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
 								>
 									<div
-										className={`p-4 rounded-lg shadow ${message.sender === 'user'
-											? 'bg-blue-500 text-white'
-											: 'bg-white text-gray-800'
+										className={`p-4 rounded-lg shadow ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-white text-gray-800'
 											} max-w-[70%]`}
 									>
 										<p className="text-sm">{message.text}</p>
@@ -96,7 +125,7 @@ export function MainContent({ selectedMenu, isLoading = false, isSidebarOpen }) 
 							))}
 						</div>
 
-						{/* Поле ввода и кнопка отправки */}
+						{/* Поле ввода и кнопка */}
 						<div className="flex items-center space-x-2">
 							<input
 								type="text"
@@ -264,7 +293,36 @@ export function MainContent({ selectedMenu, isLoading = false, isSidebarOpen }) 
 					</div>
 				);
 			case 'Товары':
-				return <h1 className="p-4">Товары</h1>;
+				return (
+					< div className="p-4" >
+						<h1 className="text-xl font-bold mb-4">Товары</h1>
+						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+							{products.map((product) => (
+								<div
+									key={product.id}
+									className="bg-white rounded-2xl shadow-md overflow-hidden"
+								>
+									<img
+										src={product.image}
+										alt={product.title}
+										className="w-full h-60 object-cover rounded-t-lg"
+									/>
+									<div className="p-4 bg-[#F6F7F8] rounded-2xl">
+										<h3 className="text-lg font-semibold text-gray-800">
+											{product.title}
+										</h3>
+										<p className="text-sm text-gray-600 mt-1">
+											{product.description}
+										</p>
+										<p className="text-lg font-bold text-gray-800 mt-2">
+											{product.price} ₽
+										</p>
+									</div>
+								</div>
+							))}
+						</div>
+					</div >
+				)
 			default:
 				return <div className="p-4">Выберите пункт меню</div>;
 		}
@@ -273,7 +331,7 @@ export function MainContent({ selectedMenu, isLoading = false, isSidebarOpen }) 
 	return (
 		<main
 			ref={mainRef} // Привязываем ref к элементу <main>
-			className={`md:fixed rounded-2xl bg-white pr-4 md:pt-2 md:px-6 md:left-0 w-screen md:w-[calc(100vw-17rem)] h-[calc(100vh-5rem)] overflow-y-auto overflow-x-hidden ${isSidebarOpen ? 'translate-x-full' : '-translate-x-0'
+			className={`md:fixed rounded-2xl bg-white pr-4 md:pt-2 md:px-6 md:left-0 w-screen md:w-[calc(100vw-17rem)] h-[calc(100vh-136px)] overflow-y-auto overflow-x-hidden ${isSidebarOpen ? 'translate-x-full' : '-translate-x-0'
 				} md:translate-x-0 z-10`}
 		>
 			{isLoading ? <div className="p-4">Loading...</div> : renderMainContent()}

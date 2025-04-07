@@ -83,6 +83,7 @@ const BusinessRegistration = () => {
 		data.append('socials', formData.socials.toString());
 		data.append('delivery', formData.delivery.toString());
 
+
 		try {
 			const response = await axios.post(
 				`${import.meta.env.VITE_API_BASE_URL}/companies`,

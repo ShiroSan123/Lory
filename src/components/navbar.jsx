@@ -10,11 +10,11 @@ const Header = () => {
 	return (
 		<header className="flex items-center px-4 py-3 bg-white shadow-md md:px-6 lg:px-8 relative">
 			{/* Левая часть: иконка меню */}
-			<div className="flex items-center">
+			{/* <div className="flex items-center">
 				<button className="text-gray-600 focus:outline-none md:hidden">
 					<HiMenuAlt3 className="w-6 h-6" />
 				</button>
-			</div>
+			</div> */}
 
 			{/* Центральная часть: логотип */}
 			<a className="flex items-center space-x-2 mx-auto" href='/'>

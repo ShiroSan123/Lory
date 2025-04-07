@@ -1,33 +1,33 @@
-function Header({ onToggleLeftSidebar, selectedMenu }) {
+import { useNavigate } from "react-router-dom";
+
+const Header = ({ onToggleLeftSidebar, selectedMenu, selectedEmployee }) => {
 	const token = localStorage.getItem('token');
 	const userName = localStorage.getItem('userName');
+	const navigate = useNavigate();
 
 	const handleLogout = () => {
-		// Очищаем localStorage
 		localStorage.removeItem('token');
 		localStorage.removeItem('refreshToken');
 		localStorage.removeItem('user');
 		localStorage.removeItem('id');
-		localStorage.removeItem('companies'); // Удаляем список компаний, если он больше не нужен
-
-		// Перенаправляем на страницу логина
+		localStorage.removeItem('companies');
 		navigate('/');
 	};
+
 	return (
-		<header className="fixed bottom-0 left-0 right-0 h-16 flex md:gap-4 *:items-center justify-between md:justify-normal bg-white md:bg-inherit">
+		<header className="fixed bottom-0 left-0 right-0 h-30 flex md:gap-4 *:items-center justify-between md:justify-normal bg-white md:bg-inherit">
 			<div className="flex items-center space-x-4 md:pl-4 md:rounded-tr-2xl md:w-[calc(100vw-16rem)] bg-white">
-				<button
-					className="p-2 rounded-full hover:bg-gray-200"
-					aria-label="Settings"
-				>
+				<button className="p-2 rounded-full hover:bg-gray-200" aria-label="Settings">
 					<span>{selectedMenu}</span>
 				</button>
-				<button
-					className="p-2 rounded-full hover:bg-gray-200"
-					aria-label="Notifications"
-				>
-					<span>🔔</span>
-				</button>
+				{selectedMenu === 'Сотрудники' && selectedEmployee && (
+					<div className="flex flex-col text-sm">
+						<span>Телефон: {selectedEmployee.phone}</span>
+						<span>Посещений: {selectedEmployee.visits}</span>
+						<span>Отмененные: {selectedEmployee.canceled}</span>
+						<span>Выручка: {selectedEmployee.revenue}</span>
+					</div>
+				)}
 			</div>
 			<div className="flex items-center space-x-4 md:w-64 md:pl-6 md:rounded-tl-2xl bg-white">
 				<button
@@ -42,7 +42,6 @@ function Header({ onToggleLeftSidebar, selectedMenu }) {
 						<a className="text-lg font-bold" href="/dashboard">
 							<p>{userName}</p>
 						</a>
-						{/* Кнопка выхода */}
 						<button
 							onClick={handleLogout}
 							className="flex items-center p-2 gap-2 mb-2 rounded-lg hover:bg-gray-100 cursor-pointer w-full text-left text-red-600"

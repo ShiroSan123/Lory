@@ -6,6 +6,7 @@ import './App.css';
 
 const Dashboard = () => {
 	const [selectedMenu, setSelectedMenu] = useState('Главная');
+	const [selectedEmployee, setSelectedEmployee] = useState(null); // Добавляем состояние для выбранного сотрудника
 	const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false); // Для свайпа
 	const [touchStart, setTouchStart] = useState(null);
 	const [touchMove, setTouchMove] = useState(null);
@@ -18,6 +19,12 @@ const Dashboard = () => {
 		{ icon: '/ico/user-1.svg', label: 'Клиенты' },
 		{ icon: '/ico/shopping.svg', label: 'Товары' },
 	];
+
+	// Обновляем функцию onSelectMenu для принятия сотрудника
+	const handleSelectMenu = (menu, employee = null) => {
+		setSelectedMenu(menu);
+		setSelectedEmployee(employee); // Устанавливаем выбранного сотрудника
+	};
 
 	// Обработка начала касания
 	const handleTouchStart = (e) => {
@@ -57,16 +64,21 @@ const Dashboard = () => {
 			<Header
 				onToggleLeftSidebar={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
 				selectedMenu={selectedMenu}
+				selectedEmployee={selectedEmployee} // Передаем выбранного сотрудника в Header
 			/>
 			<RightSidebar
-				isOpen={!isLeftSidebarOpen} // По умолчанию открыта на мобильных
-				onClose={() => setIsLeftSidebarOpen(true)} // Закрытие = показ MainContent
+				isOpen={!isLeftSidebarOpen}
+				onClose={() => setIsLeftSidebarOpen(true)}
 				menuItems={menuItems}
-				onSelectMenu={setSelectedMenu}
+				onSelectMenu={handleSelectMenu} // Передаем обновленную функцию
 			/>
-			<MainContent selectedMenu={selectedMenu} isSidebarOpen={isLeftSidebarOpen} />
+			<MainContent
+				selectedMenu={selectedMenu}
+				isSidebarOpen={isLeftSidebarOpen}
+				selectedEmployee={selectedEmployee} // Передаем выбранного сотрудника в MainContent
+			/>
 		</div>
 	);
 };
 
-export default Dashboard;	
+export default Dashboard;
