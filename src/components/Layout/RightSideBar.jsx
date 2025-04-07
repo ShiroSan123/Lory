@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../../scripts/axiosInstance'; // Импортируем настроенный экземпляр Axios
+import { useNavigate } from 'react-router-dom';
 
 function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 	const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-	const [companies, setCompanies] = useState([]); // Состояние для списка компаний
-	const [expandedCompany, setExpandedCompany] = useState(null); // Для управления выпадающими списками
 	const [error, setError] = useState(''); // Для обработки ошибок
+	const [isLoading, setIsLoading] = useState(false); // Состояние загрузки
+	const [companyName, setCompanyName] = useState(''); // Для хранения названия компании с индексом 1
+	const [expandedCompany, setExpandedCompany] = useState(null); // Для управления выпадающими списками
 
 	const token = localStorage.getItem('token'); // Получаем токен из localStorage
-	const idFromStorage = localStorage.getItem('id'); // Получаем id из localStorage
-	const id = idFromStorage ? parseInt(idFromStorage, 10) : null; // Преобразуем id в int
+	const navigate = useNavigate(); // Инициализируем navigate
 
 	// Функция для переключения видимости уведомлений
 	const toggleNotifications = () => {
@@ -21,41 +22,67 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 		setExpandedCompany(expandedCompany === companyId ? null : companyId);
 	};
 
-	// Получение списка компаний при монтировании компонента
+	// Получение списка компаний и сохранение их в localStorage
 	useEffect(() => {
 		const fetchCompanies = async () => {
 			// Проверяем наличие токена
 			if (!token) {
 				setError('Authorization token is missing. Please log in.');
+				navigate('/LoginUser'); // Перенаправляем на страницу логина
 				return;
 			}
 
-			// Проверяем, что id является валидным числом
-			if (!id || isNaN(id)) {
-				setError('Invalid or missing company ID. Please try again.');
-				return;
-			}
-
+			setIsLoading(true); // Устанавливаем состояние загрузки
 			try {
-				const response = await axios.get(
-					`${import.meta.env.VITE_API_BASE_URL}/companies/me`,
-					{
-						headers: {
-							'Authorization': `${token}`,
-						},
-					}
+				// 1. Получаем список ID компаний через GET /companies/me
+				const response = await axiosInstance.get('/companies/me');
+
+				const companyIds = response.data; // Предполагаем, что это массив ID, например [1, 2, 3]
+				console.log('Company IDs:', companyIds);
+
+				if (!companyIds || companyIds.length === 0) {
+					// Если компаний нет, сохраняем пустой массив в localStorage
+					localStorage.setItem('companies', JSON.stringify([]));
+					setIsLoading(false);
+					return;
+				}
+
+				// 2. Для каждого ID запрашиваем полные данные компании через GET /companies/{id}
+				const companyPromises = companyIds.map((id) =>
+					axiosInstance.get(`/companies/${id}`)
 				);
-				setCompanies(response.data); // Сохраняем список компаний
+
+				// 3. Выполняем все запросы параллельно и собираем данные
+				const companyResponses = await Promise.all(companyPromises);
+				const companyData = companyResponses.map((res) => res.data);
+
+				// 4. Сохраняем данные в localStorage
+				localStorage.setItem('companies', JSON.stringify(companyData));
+				console.log('Companies saved to localStorage:', companyData);
+
+				// 5. Извлекаем компанию с индексом 1 и её название
+				const savedCompanies = JSON.parse(localStorage.getItem('companies')) || [];
+				if (savedCompanies.length > 1) {
+					// Проверяем, есть ли компания с индексом 1
+					setCompanyName(savedCompanies[1].name || 'Название не указано');
+				} else {
+					setCompanyName('Компания с индексом 1 не найдена');
+				}
 			} catch (err) {
 				setError(
 					err.response?.data?.message || 'Failed to fetch companies. Please try again.'
 				);
 				console.error('Error fetching companies:', err.response?.data);
+			} finally {
+				setIsLoading(false); // Сбрасываем состояние загрузки
 			}
 		};
 
 		fetchCompanies();
-	}, [token, id]); // Добавляем id в зависимости useEffect
+	}, [token, navigate]);
+
+	// Извлекаем компании из localStorage
+	const savedCompanies = JSON.parse(localStorage.getItem('companies')) || [];
 
 	return (
 		<aside
@@ -101,14 +128,30 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 				</div>
 			)}
 
+			{/* Индикатор загрузки, ошибки или название компании */}
+			<div className="mt-6">
+				{isLoading ? (
+					<p className="text-gray-600">Загрузка компаний...</p>
+				) : error ? (
+					<p className="text-red-600 mb-4">{error}</p>
+				) : (
+					<p className="text-gray-600">
+						Компания с индексом 1: <strong>{companyName}</strong>
+					</p>
+				)}
+			</div>
+
 			{/* Список компаний */}
 			<div className="mt-6">
 				<h3 className="text-lg font-semibold mb-4">Мои компании</h3>
-				{error && <p className="text-red-600 mb-4">{error}</p>}
-				{companies.length === 0 && !error ? (
+				{isLoading ? (
+					<p className="text-gray-600">Загрузка компаний...</p>
+				) : error ? (
+					<p className="text-red-600 mb-4">{error}</p>
+				) : savedCompanies.length === 0 ? (
 					<p className="text-gray-600">Компании не найдены.</p>
 				) : (
-					companies.map((company) => (
+					savedCompanies.map((company) => (
 						<div key={company.id} className="mb-4">
 							{/* Заголовок компании с кнопкой раскрытия */}
 							<div
@@ -124,6 +167,12 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 							{expandedCompany === company.id && (
 								<div className="pl-4 pt-2 pb-2 bg-gray-50 rounded-lg mt-1">
 									<p className="text-sm text-gray-700">
+										<strong>ID:</strong> {company.id}
+									</p>
+									<p className="text-sm text-gray-700 mt-1">
+										<strong>Название:</strong> {company.name || 'Не указано'}
+									</p>
+									<p className="text-sm text-gray-700 mt-1">
 										<strong>Сфера:</strong> {company.businessType || 'Не указано'}
 									</p>
 									<p className="text-sm text-gray-700 mt-1">
@@ -141,6 +190,71 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 									<p className="text-sm text-gray-700 mt-1">
 										<strong>Выходные:</strong> {company.holidays || 'Не указано'}
 									</p>
+									<p className="text-sm text-gray-700 mt-1">
+										<strong>Описание от ИИ:</strong> {company.descriptionAI || 'Не указано'}
+									</p>
+									<p className="text-sm text-gray-700 mt-1">
+										<strong>Логотип:</strong>{' '}
+										{company.logo ? (
+											<a href={company.logo} target="_blank" rel="noopener noreferrer">
+												Ссылка
+											</a>
+										) : (
+											'Не указано'
+										)}
+									</p>
+									<p className="text-sm text-gray-700 mt-1">
+										<strong>Календарь:</strong> {company.calendar ? 'Да' : 'Нет'}
+									</p>
+									<p className="text-sm text-gray-700 mt-1">
+										<strong>Аналитика:</strong> {company.analytics ? 'Да' : 'Нет'}
+									</p>
+									<p className="text-sm text-gray-700 mt-1">
+										<strong>Telegram:</strong> {company.telegram ? 'Да' : 'Нет'}
+									</p>
+									<p className="text-sm text-gray-700 mt-1">
+										<strong>Генерация ИИ:</strong> {company.aiText ? 'Да' : 'Нет'}
+									</p>
+									<p className="text-sm text-gray-700 mt-1">
+										<strong>Соцсети:</strong> {company.socials ? 'Да' : 'Нет'}
+									</p>
+									<p className="text-sm text-gray-700 mt-1">
+										<strong>Доставка:</strong> {company.delivery ? 'Да' : 'Нет'}
+									</p>
+									{/* Отображение филиалов (branches) */}
+									<div className="text-sm text-gray-700 mt-1">
+										<strong>Филиалы:</strong>
+										{company.branches && company.branches.length > 0 ? (
+											<ul className="list-disc pl-4">
+												{company.branches.map((branch, index) => (
+													<li key={index}>
+														{typeof branch === 'object' && branch !== null
+															? branch.name || JSON.stringify(branch)
+															: branch || 'Не указано'}
+													</li>
+												))}
+											</ul>
+										) : (
+											' Не указано'
+										)}
+									</div>
+									{/* Отображение сотрудников (members) */}
+									<div className="text-sm text-gray-700 mt-1">
+										<strong>Сотрудники:</strong>
+										{company.members && company.members.length > 0 ? (
+											<ul className="list-disc pl-4">
+												{company.members.map((member, index) => (
+													<li key={index}>
+														{typeof member === 'object' && member !== null
+															? member.role || JSON.stringify(member)
+															: member || 'Не указано'}
+													</li>
+												))}
+											</ul>
+										) : (
+											' Не указано'
+										)}
+									</div>
 								</div>
 							)}
 						</div>

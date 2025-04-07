@@ -3,11 +3,16 @@ function Header({ onToggleLeftSidebar, selectedMenu }) {
 	const userName = localStorage.getItem('userName');
 
 	const handleLogout = () => {
+		// Очищаем localStorage
 		localStorage.removeItem('token');
-		localStorage.removeItem('userName');
-		// Можно добавить редирект, например: window.location.href = '/login';
-	};
+		localStorage.removeItem('refreshToken');
+		localStorage.removeItem('user');
+		localStorage.removeItem('id');
+		localStorage.removeItem('companies'); // Удаляем список компаний, если он больше не нужен
 
+		// Перенаправляем на страницу логина
+		navigate('/');
+	};
 	return (
 		<header className="fixed bottom-0 left-0 right-0 h-16 flex md:gap-4 *:items-center justify-between md:justify-normal bg-white md:bg-inherit">
 			<div className="flex items-center space-x-4 md:pl-4 md:rounded-tr-2xl md:w-[calc(100vw-16rem)] bg-white">
@@ -37,7 +42,11 @@ function Header({ onToggleLeftSidebar, selectedMenu }) {
 						<a className="text-lg font-bold" href="/dashboard">
 							<p>{userName}</p>
 						</a>
-						<button onClick={handleLogout} className="text-sm text-gray-600">
+						{/* Кнопка выхода */}
+						<button
+							onClick={handleLogout}
+							className="flex items-center p-2 gap-2 mb-2 rounded-lg hover:bg-gray-100 cursor-pointer w-full text-left text-red-600"
+						>
 							Выйти
 						</button>
 					</div>

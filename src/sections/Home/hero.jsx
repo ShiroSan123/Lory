@@ -88,9 +88,9 @@ const HeroSection = () => {
 				<p className="text-lg text-gray-600 mb-6">
 					Сервис для увеличения прибыли и количества заявок
 				</p>
-				<button className="bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition">
+				<a href="/Dashboard"><button className="bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition">
 					Попробовать бесплатно
-				</button>
+				</button></a>
 			</div>
 		</div>
 	);
