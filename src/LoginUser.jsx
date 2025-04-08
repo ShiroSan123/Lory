@@ -32,7 +32,6 @@ const LoginUser = () => {
         }
         // Сохраняем полученные токены и информацию о пользователе
         localStorage.setItem("token", data.accessToken);
-        localStorage.setItem("user", JSON.stringify(data.user));
         localStorage.setItem("id", data.id);
         console.log("Saved token:", localStorage.getItem("token"));
 
@@ -57,6 +56,7 @@ const LoginUser = () => {
         localStorage.setItem("telegramId", userData.telegramId);
         localStorage.setItem("authProvider", userData.authProvider);
         localStorage.setItem("name", userData.name);
+		localStorage.setItem("user", userData.name);
 
         // Переход к Dashboard через 2 секунды
         setTimeout(() => navigate("/Dashboard"), 2000);
