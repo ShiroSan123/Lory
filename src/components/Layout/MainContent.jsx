@@ -41,6 +41,10 @@ export const MainContent = memo(({
 	const [businesses, setBusinesses] = useState([]);
 	const [isChoosingDescription, setIsChoosingDescription] = useState(false);
 
+	// Новые состояния для товаров
+	const [companies, setCompanies] = useState([]);
+	const [services, setServices] = useState({});
+
 	const steps = ['name', 'description', 'type', 'theme'];
 
 	const stepQuestions = {
@@ -68,6 +72,93 @@ export const MainContent = memo(({
 	};
 
 	const token = localStorage.getItem('token');
+	const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
+	// Функция для получения списка компаний
+	const fetchCompanies = useCallback(async () => {
+		try {
+			const response = await axios.get(
+				`${baseUrl}/business/admin`,
+				{ headers: { Authorization: `Bearer ${token}` } }
+			);
+			setCompanies(response.data);
+		} catch (err) {
+			setError(err.response?.data?.message || 'Ошибка при получении списка компаний.');
+		}
+	}, [token, baseUrl]);
+
+	// Функция для получения услуг компании
+	const fetchServices = useCallback(async (businessId) => {
+		try {
+			const response = await axios.get(
+				`${baseUrl}/services/${businessId}`,
+				{ headers: { Authorization: `Bearer ${token}` } }
+			);
+			// Логируем ответ для отладки
+			console.log(`[fetchServices] Response for businessId ${businessId}:`, response.data);
+
+			// Безопасно получаем items, с fallback на пустой массив
+			const items = response.data?.customParameters?.items || [];
+			setServices(prev => ({
+				...prev,
+				[businessId]: items,
+			}));
+		} catch (err) {
+			console.error(`[fetchServices] Error for businessId ${businessId}:`, err.response?.data || err.message);
+			setError(err.response?.data?.message || `Ошибка при получении услуг для компании ${businessId}.`);
+			// Устанавливаем пустой массив в случае ошибки
+			setServices(prev => ({
+				...prev,
+				[businessId]: [],
+			}));
+		}
+	}, [token, baseUrl]);
+
+	// Функция для добавления новой услуги
+	const addService = useCallback(async (businessId) => {
+		const newService = {
+			moduleType: "MENU",
+			customParameters: {
+				displayType: "list",
+				categories: ["Entrées"],
+				items: [
+					{
+						name: "Soupe à l'oignon",
+						description: "Традиционный французский луковый суп с сырной корочкой",
+						price: 8.5,
+					},
+				],
+			},
+		};
+
+		try {
+			await axios.post(
+				`${baseUrl}/services/${businessId}`,
+				newService,
+				{ headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+			);
+			// Обновляем список услуг после добавления
+			await fetchServices(businessId); // Ждем завершения, чтобы данные обновились
+		} catch (err) {
+			setError(err.response?.data?.message || 'Ошибка при добавлении услуги.');
+		}
+	}, [token, baseUrl, fetchServices]);
+
+	// Загружаем компании при монтировании компонента
+	useEffect(() => {
+		if (selectedMenu === 'Товары') {
+			fetchCompanies();
+		}
+	}, [selectedMenu, fetchCompanies]);
+
+	// Загружаем услуги для каждой компании
+	useEffect(() => {
+		if (selectedMenu === 'Товары' && companies.length > 0) {
+			companies.forEach(company => {
+				fetchServices(company.id);
+			});
+		}
+	}, [companies, selectedMenu, fetchServices]);
 
 	const generateDescriptionAI = useCallback(async (addMessage) => {
 		setLocalLoading(true);
@@ -196,7 +287,7 @@ export const MainContent = memo(({
 
 		try {
 			const response = await axios.post(
-				`${import.meta.env.VITE_API_BASE_URL}/business`,
+				`${baseUrl}/business`,
 				formPayload,
 				{ headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
 			);
@@ -211,12 +302,12 @@ export const MainContent = memo(({
 		} finally {
 			setIsRegistering(false);
 		}
-	}, [formData, token, navigate]);
+	}, [formData, token, navigate, baseUrl]);
 
 	const fetchBusinesses = useCallback(async (addMessage) => {
 		try {
 			const response = await axios.get(
-				`${import.meta.env.VITE_API_BASE_URL}/business/admin`,
+				`${baseUrl}/business/admin`,
 				{ headers: { Authorization: `Bearer ${token}` } }
 			);
 			setBusinesses(response.data);
@@ -232,7 +323,7 @@ export const MainContent = memo(({
 			setError(errorMessage);
 			addMessage({ sender: 'bot', text: errorMessage });
 		}
-	}, [token]);
+	}, [token, baseUrl]);
 
 	const handleButtonClick = useCallback((value, addMessage) => {
 		addMessage({ sender: 'user', text: value });
@@ -276,7 +367,7 @@ export const MainContent = memo(({
 	const handleUpdateCompany = useCallback(async (companyId) => {
 		try {
 			const response = await axios.put(
-				`${import.meta.env.VITE_API_BASE_URL}/companies/${companyId}`,
+				`${baseUrl}/companies/${companyId}`,
 				companyData,
 				{
 					headers: {
@@ -299,9 +390,8 @@ export const MainContent = memo(({
 			setUpdateError('Произошла ошибка при обновлении данных. Попробуйте снова.');
 			setUpdateSuccess('');
 		}
-	}, [companyData, token]);
+	}, [companyData, token, baseUrl]);
 
-	// Рендеринг контента остается практически без изменений
 	const renderMainContent = () => {
 		switch (selectedMenu) {
 			case 'LoryAI':
@@ -464,31 +554,50 @@ export const MainContent = memo(({
 				return (
 					<div className="p-4">
 						<h1 className="text-xl font-bold mb-4">Товары</h1>
-						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-							{products.map((product) => (
-								<div
-									key={product.id}
-									className="bg-white rounded-2xl shadow-md overflow-hidden"
-								>
-									<img
-										src={product.image}
-										alt={product.title}
-										className="w-full h-60 object-cover rounded-t-lg"
-									/>
-									<div className="p-4 bg-[#F6F7F8] rounded-2xl">
-										<h3 className="text-lg font-semibold text-gray-800">
-											{product.title}
-										</h3>
-										<p className="text-sm text-gray-600 mt-1">
-											{product.description}
-										</p>
-										<p className="text-lg font-bold text-gray-800 mt-2">
-											{product.price} ₽
-										</p>
+						{companies.length === 0 ? (
+							<p className="text-gray-600">Компании не найдены или данные загружаются...</p>
+						) : (
+							companies.map(company => (
+								<div key={company.id} className="mb-6">
+									<h2 className="text-lg font-semibold text-gray-800 mb-2">{company.name}</h2>
+									<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+										{(services[company.id] || []).length > 0 ? (
+											services[company.id].map((service, index) => (
+												<div
+													key={index}
+													className="bg-white rounded-2xl shadow-md overflow-hidden"
+												>
+													<img
+														src="/images/placeholder.jpg" // Замените на реальное изображение, если есть
+														alt={service.name || 'Товар'}
+														className="w-full h-60 object-cover rounded-t-lg"
+													/>
+													<div className="p-4 bg-white rounded-2xl">
+														<h3 className="text-lg font-semibold text-gray-800">
+															{service.name || 'Без названия'}
+														</h3>
+														<p className="text-sm text-gray-600 mt-1">
+															{service.description || 'Описание отсутствует'}
+														</p>
+														<p className="text-lg font-bold text-gray-800 mt-2">
+															{service.price ? `${service.price} ₽` : 'Цена не указана'}
+														</p>
+													</div>
+												</div>
+											))
+										) : (
+											<p className="text-gray-600">Товары для {company.name} отсутствуют.</p>
+										)}
 									</div>
+									<button
+										onClick={() => addService(company.id)}
+										className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
+									>
+										Добавить
+									</button>
 								</div>
-							))}
-						</div>
+							))
+						)}
 					</div>
 				);
 			case 'Business':
@@ -812,6 +921,6 @@ export const MainContent = memo(({
 			{isLoading ? <div className="p-4">Loading...</div> : renderMainContent()}
 		</main>
 	);
-})
+});
 
 export default MainContent;
