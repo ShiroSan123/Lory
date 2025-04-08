@@ -54,7 +54,7 @@ const HomePage = () => {
 		console.log( userInfo)
 		console.log("auth")
         localStorage.setItem('userInfo', JSON.stringify(userInfo));
-		  localStorage.setItem("auth_me", JSON.stringify(userData));
+		  localStorage.setItem("auth_me", JSON.stringify(userInfo));
         localStorage.setItem("id", userInfo.id);
         localStorage.setItem("telegramId", userInfo.telegramId);
         localStorage.setItem("name", userInfo.name);
@@ -111,7 +111,8 @@ const HomePage = () => {
           console.log("Полученные данные auth:", userInfo);
   
           // Сохраняем данные пользователя
-          localStorage.setItem("auth_me", JSON.stringify(userData)); // Если нужно именно telegram данные, или можно заменить на userInfo
+          localStorage.setItem('userInfo', JSON.stringify(userInfo));
+          localStorage.setItem("auth_me", JSON.stringify(userInfo));
           localStorage.setItem("id", userInfo.id);
           localStorage.setItem("telegramId", userInfo.telegramId);
           localStorage.setItem("name", userInfo.name);

@@ -49,6 +49,7 @@ const LoginUser = () => {
       .then((userData) => {
         console.log("Дополнительные данные пользователя:", userData);
         // Сохраняем дополнительные данные, полученные с /auth/me, в localStorage
+        localStorage.setItem('userInfo', JSON.stringify(userData));
         localStorage.setItem("auth_me", JSON.stringify(userData));
         localStorage.setItem("id", userData.id);
         localStorage.setItem("telegramId", userData.telegramId);

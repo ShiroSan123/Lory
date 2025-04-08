@@ -82,7 +82,7 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 				const businesses = response.data;
 				if (!businesses || businesses.length === 0) {
 					console.log('[RightSidebar] fetchCompanies: No business data returned');
-					setError('Данные о бизнесе не найдены.');
+					//setError('Данные о бизнесе не найдены.');
 					setCompanies([]);
 				} else {
 					// Map the API response to match the expected structure
