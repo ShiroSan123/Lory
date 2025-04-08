@@ -20,10 +20,10 @@ const HomePage = () => {
 
       // Формируем полезную нагрузку для запроса авторизации
       const payload = {
-        telegramId: userData.telegramId,
-        name: userData.name,
+        telegramId: userData.user.id,
+        name: userData.user.name,
       };
-
+	  alert(JSON.stringify(userData, null, 2))
       // Отправляем POST-запрос на эндпоинт авторизации через Telegram OAuth
       fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/oauth`, {
         method: 'POST',
@@ -42,7 +42,6 @@ const HomePage = () => {
           // Сохраняем полученные токены
           localStorage.setItem('accessToken', data.accessToken);
           localStorage.setItem('refreshToken', data.refreshToken);
-
           // Далее отправляем запрос к эндпоинту auth/me для получения дополнительных данных пользователя
           return fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
             method: 'GET',
