@@ -73,7 +73,7 @@ const HomePage = () => {
     if (isLocalhost) return;
     if (!authTriggered.current && isTelegram && userData) {
       authTriggered.current = true; // помечаем, что запрос уже выполнен
-
+      alert(userData.user.id + " " + userData.user.first_name)
       const payload = {
         telegramId: userData.user.id,
         name: userData.user.first_name,
