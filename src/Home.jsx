@@ -21,10 +21,9 @@ const HomePage = () => {
       // Формируем полезную нагрузку для запроса авторизации
       const payload = {
         telegramId: userData.user.id,
-        name: userData.user.name,
+        name: userData.user.first_name,
       };
 	  alert(JSON.stringify(userData.user, null, 2))
-      // Отправляем POST-запрос на эндпоинт авторизации через Telegram OAuth
       fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/oauth`, {
         method: 'POST',
         headers: {
