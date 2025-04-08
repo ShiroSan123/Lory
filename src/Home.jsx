@@ -42,7 +42,7 @@ const HomePage = () => {
           // Сохраняем полученные токены
           localStorage.setItem('accessToken', data.accessToken);
           localStorage.setItem('refreshToken', data.refreshToken);
-
+			alert("Name " + userData.name)
           // Далее отправляем запрос к эндпоинту auth/me для получения дополнительных данных пользователя
           return fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
             method: 'GET',
