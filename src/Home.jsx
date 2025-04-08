@@ -78,35 +78,46 @@ const HomePage = () => {
         telegramId: userData.user.id,
         name: userData.user.first_name,
       };
-
       fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/oauth`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-			alert(data.accessToken)
-          localStorage.setItem('accessToken', data.accessToken);
-          localStorage.setItem('refreshToken', data.refreshToken);
-          return fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${data.accessToken}`,
-            },
-          });
-        })
-        .then((res) => res.json())
-        .then((userInfo) => {
-          localStorage.setItem('userInfo', JSON.stringify(userInfo));
-          navigate('/Dashboard');
-        })
-        .catch((err) => {
-          console.error('Authorization error:', err);
-        });
+		method: 'POST',
+		headers: {
+		  'Content-Type': 'application/json',
+		},
+		body: JSON.stringify(payload),
+	  })
+		.then((res) => res.json())
+		.then((data) => {
+		  // Сохраняем полученные токены
+		  localStorage.setItem('token', data.accessToken);
+		  localStorage.setItem('refreshToken', data.refreshToken);
+		  console.log( data.accessToken)
+		  // Запрос дополнительных данных пользователя через эндпоинт auth/me,
+		  // используя accessToken для авторизации
+		  return fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
+			method: 'GET',
+			headers: {
+			  'Content-Type': 'application/json',
+			  'Authorization': `Bearer ${data.accessToken}`,
+			},
+		  });
+		})
+		.then((res) => res.json())
+		.then((userInfo) => {
+		  console.log( userInfo)
+		  console.log("auth")
+		  localStorage.setItem('userInfo', JSON.stringify(userInfo));
+		  localStorage.setItem("auth_me", JSON.stringify(userData));
+		  localStorage.setItem("id", userInfo.id);
+		  localStorage.setItem("telegramId", userInfo.telegramId);
+		  localStorage.setItem("name", userInfo.name);
+		  localStorage.setItem("user", userInfo.name);
+  
+		  // Переход к Dashboard через 2 секунды
+		  setTimeout(() => navigate("/Dashboard"), 2000);
+		})
+		.catch((err) => {
+		  console.error('Authorization error:', err);
+		});
     }
   }, 	  [isLocalhost, isTelegram, navigate, userData]);
 
