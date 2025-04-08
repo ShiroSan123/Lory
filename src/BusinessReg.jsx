@@ -510,7 +510,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import ChatBot from './components/ChatBot';
+// import ChatBot from './components/ChatBot';
 
 const BusinessRegistration = () => {
 	const token = localStorage.getItem('token');
