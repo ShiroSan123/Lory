@@ -4,6 +4,10 @@ body {
 
 @media (max-width: 768px) {
 
+	.chat-main {
+		transform: none !important;
+	  }
+
 	/* По умолчанию показываем только RightSidebar */
 	aside {
 		width: 100% !important;
