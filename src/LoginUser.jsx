@@ -17,6 +17,8 @@ const LoginUser = () => {
       name: user.first_name || user.name,             // user.name для ручного ввода
     };
 
+    localStorage.setItem("photo", user.photo_url)
+
     console.log("Отправляем данные на сервер:", formData);
     axios
       .post(`${import.meta.env.VITE_API_BASE_URL}/auth/oauth`, formData, {

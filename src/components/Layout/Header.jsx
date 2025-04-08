@@ -73,9 +73,9 @@ const Header = ({ onToggleLeftSidebar, selectedMenu, selectedEmployee }) => {
 					<p className="text-red-600">{error}</p>
 				) : token ? (
 					<div className="flex items-center gap-4">
-						<a className="text-lg font-bold" href="/dashboard">
+						{/* <a className="text-lg font-bold" href="/dashboard">
 							<p>{userData?.name || "User"}</p>
-						</a>
+						</a> */}
 						{/* <p className="text-sm">Token: {token}</p> Отображаем token */}
 						<button
 							onClick={handleLogout}
