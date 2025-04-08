@@ -23,7 +23,6 @@ const HomePage = () => {
         telegramId: userData.user.id,
         name: userData.user.first_name,
       };
-	  alert(JSON.stringify(userData.user, null, 2))
       fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/oauth`, {
         method: 'POST',
         headers: {
@@ -32,6 +31,8 @@ const HomePage = () => {
         body: JSON.stringify(payload),
       })
         .then((res) => {
+			alert(userData.user.id + " " + userData.user.first_name)
+			alert(JSON.stringify(res, null, 2))
           if (!res.ok) {
             throw new Error('Authorization failed');
           }
