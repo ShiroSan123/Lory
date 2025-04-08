@@ -73,50 +73,53 @@ const HomePage = () => {
     if (isLocalhost) return;
     if (!authTriggered.current && isTelegram && userData) {
       authTriggered.current = true; // помечаем, что запрос уже выполнен
-      alert(userData.user.id + " " + userData.user.first_name)
-      const payload = {
-        telegramId: userData.user.id,
-        name: userData.user.first_name,
-      };
-      fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/oauth`, {
-		method: 'POST',
-		headers: {
-		  'Content-Type': 'application/json',
-		},
-		body: JSON.stringify(payload),
-	  })
-		.then((res) => res.json())
-		.then((data) => {
-		  // Сохраняем полученные токены
-      alert("access: " + data.accessToken)
-		  localStorage.setItem('token', data.accessToken);
-		  localStorage.setItem('refreshToken', data.refreshToken);
-		  return fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
-			method: 'GET',
-			headers: {
-			  'Content-Type': 'application/json',
-			  'Authorization': `Bearer ${data.accessToken}`,
-			},
-		  });
-		})
-		.then((res) => res.json())
-		.then((userInfo) => {
-		  console.log( userInfo)
-		  console.log("auth")
-		  localStorage.setItem("auth_me", JSON.stringify(userData));
-		  localStorage.setItem("id", userInfo.id);
-		  localStorage.setItem("telegramId", userInfo.telegramId);
-		  localStorage.setItem("name", userInfo.name);
-		  localStorage.setItem("user", userInfo.name);
   
-		  // Переход к Dashboard через 2 секунды
-		  setTimeout(() => navigate("/Dashboard"), 2000);
-		})
-		.catch((err) => {
-		  console.error('Authorization error:', err);
-		});
+      // Задержка 1 секунда перед выполнением запроса авторизации
+      setTimeout(() => {
+        const payload = {
+          telegramId: userData.user.id,
+          name: userData.user.first_name,
+        };
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/miniapp`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        })
+        .then((response) => {
+          const data = response.data;
+            // Сохраняем полученные токены
+            localStorage.setItem('token', data.accessToken);
+            localStorage.setItem('refreshToken', data.refreshToken);
+            alert("token: " + data.accessToken)
+            return fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${data.accessToken}`,
+              },
+            });
+          })
+          .then((res) => res.json())
+          .then((userInfo) => {
+            console.log(userInfo);
+            console.log("auth");
+            localStorage.setItem("auth_me", JSON.stringify(userData));
+            localStorage.setItem("id", userInfo.id);
+            localStorage.setItem("telegramId", userInfo.telegramId);
+            localStorage.setItem("name", userInfo.name);
+            localStorage.setItem("user", userInfo.name);
+  
+            // Переход к Dashboard через 2 секунды
+            setTimeout(() => navigate("/Dashboard"), 2000);
+          })
+          .catch((err) => {
+            console.error('Authorization error:', err);
+          });
+      }, 1000);
     }
-  }, 	  [isLocalhost, isTelegram, navigate, userData]);
+  }, [isLocalhost, isTelegram, navigate, userData]);
 
   return (
     <>
