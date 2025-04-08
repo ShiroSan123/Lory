@@ -77,10 +77,9 @@ const HomePage = () => {
       const doAuth = async () => {
         try {
           // Ждем 1 секунду перед авторизацией (если требуется задержка)
-          await new Promise(resolve => setTimeout(resolve, 1000));
   
           const payload = {
-            telegramId: userData.user.id,
+            telegramId: String(userData.user.id),
             name: userData.user.first_name,
           };
   
@@ -98,7 +97,6 @@ const HomePage = () => {
           // Сохраняем токены
           localStorage.setItem('token', authData.accessToken);
           localStorage.setItem('refreshToken', authData.refreshToken);
-          alert("token: " + authData.accessToken);
   
           // Запрашиваем дополнительные данные пользователя через auth/me
           const meResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
@@ -120,7 +118,7 @@ const HomePage = () => {
           localStorage.setItem("user", userInfo.name);
   
           // Переход к Dashboard через 2 секунды
-          setTimeout(() => navigate("/Dashboard"), 2000);
+          navigate("/Dashboard")
         } catch (err) {
           console.error('Authorization error:', err);
         }
