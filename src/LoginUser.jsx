@@ -35,8 +35,6 @@ const LoginUser = () => {
         localStorage.setItem("id", data.id);
         console.log("Saved token:", localStorage.getItem("token"));
 
-        // Можно, например, показать данные, полученные с OAuth
-        alert(JSON.stringify(data.userData, null, 2));
 
         // Отправляем запрос к эндпоинту /auth/me для получения дополнительных данных пользователя
         return fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
