@@ -62,10 +62,9 @@ const HomePage = () => {
   useEffect(() => {
     // Если приложение запущено на localhost, не выполняем автоавторизацию
     if (isLocalhost) return;
-    
     if (!authTriggered.current && isTelegram && userData) {
       authTriggered.current = true; // помечаем, что запрос уже выполнен
-
+	  setTimeout(2000);
       const payload = {
         telegramId: userData.user.id,
         name: userData.user.first_name,
@@ -80,6 +79,7 @@ const HomePage = () => {
       })
         .then((res) => res.json())
         .then((data) => {
+			alert(data.accessToken)
           localStorage.setItem('accessToken', data.accessToken);
           localStorage.setItem('refreshToken', data.refreshToken);
           return fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
