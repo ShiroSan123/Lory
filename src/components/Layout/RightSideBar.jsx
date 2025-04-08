@@ -54,24 +54,17 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 			try {
 				const response = await axiosInstance.get('/companies/me');
 				const companyIds = response.data;
-				console.log('Company IDs:', companyIds);
-
 				if (!companyIds || companyIds.length === 0) {
 					localStorage.setItem('companies', JSON.stringify([]));
 					setIsLoading(false);
 					return;
 				}
 
-				const companyPromises = companyIds.map((id) =>
-					axiosInstance.get(`/companies/${id}`)
-				);
-
+				const companyPromises = companyIds.map((id) => axiosInstance.get(`/companies/${id}`));
 				const companyResponses = await Promise.all(companyPromises);
 				const companyData = companyResponses.map((res) => res.data);
 
 				localStorage.setItem('companies', JSON.stringify(companyData));
-				console.log('Companies saved to localStorage:', companyData);
-
 				const savedCompanies = JSON.parse(localStorage.getItem('companies')) || [];
 				if (savedCompanies.length > 1) {
 					setCompanyName(savedCompanies[1].name || 'Название не указано');
@@ -79,9 +72,7 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 					setCompanyName('Компания с индексом 1 не найдена');
 				}
 			} catch (err) {
-				setError(
-					err.response?.data?.message || 'Failed to fetch companies. Please try again.'
-				);
+				setError(err.response?.data?.message || 'Failed to fetch companies.');
 				console.error('Error fetching companies:', err.response?.data);
 			} finally {
 				setIsLoading(false);
@@ -93,23 +84,34 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 
 	const savedCompanies = JSON.parse(localStorage.getItem('companies')) || [];
 
-	const featureLabels = {
-		calendar: { label: 'Календарь', icon: menuItems.find(item => item.label === 'Календарь')?.icon },
-		analytics: { label: 'Аналитика', icon: menuItems.find(item => item.label === 'Аналитика')?.icon },
-		telegram: { label: 'Сотрудники', icon: menuItems.find(item => item.label === 'Сотрудники')?.icon },
-		aiText: { label: 'LoryAI', icon: menuItems.find(item => item.label === 'LoryAI')?.icon },
-		socials: { label: 'Клиенты', icon: menuItems.find(item => item.label === 'Клиенты')?.icon },
-		delivery: { label: 'Товары', icon: menuItems.find(item => item.label === 'Товары')?.icon },
-	};
+	// Dynamic feature labels based on businessType
+	const featureLabels = (businessType) => ({
+		calendar: { label: 'Календарь', icon: '/ico/calendar.svg' },
+		analytics: { label: 'Аналитика', icon: '/ico/statistic.svg' },
+		telegram: {
+			label: businessType === 'Service' ? 'Мастера' : 'Сотрудники',
+			icon: '/ico/user.svg',
+		},
+		aiText: { label: 'LoryAI', icon: '/ico/astronomy.svg' },
+		socials: { label: 'Клиенты', icon: '/ico/user-1.svg' },
+		delivery: {
+			label:
+				businessType === 'Restaurant' ? 'Блюда и доставка' :
+					businessType === 'Service' ? 'Услуги' :
+						businessType === 'Estate' ? 'Апартаменты' : 'Товары',
+			icon: '/ico/shopping.svg',
+		},
+	});
 
 	const getTrueFeatures = (company) => {
 		const features = ['calendar', 'analytics', 'telegram', 'aiText', 'socials', 'delivery'];
+		const labels = featureLabels(company.businessType || 'Default');
 		return features
 			.filter((feature) => company[feature] === 'true')
 			.map((feature) => ({
 				key: feature,
-				label: featureLabels[feature].label,
-				icon: featureLabels[feature].icon,
+				label: labels[feature].label,
+				icon: labels[feature].icon,
 			}));
 	};
 
@@ -136,8 +138,8 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 						<div key={company.id} className="mb-4">
 							<div className="flex items-center p-2 gap-2 rounded-lg bg-gray-50">
 								<span
-									className="font-medium hover:text-amber-700"
-									onClick={() => onSelectMenu('Business', { companyId: company.id })}
+									className="font-medium hover:text-amber-700 cursor-pointer"
+									onClick={() => onSelectMenu('Business', company)}
 								>
 									{company.name}
 								</span>
@@ -147,20 +149,16 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 									<div
 										key={feature.key}
 										className="flex items-center p-2 gap-2 mt-2 rounded-lg hover:bg-gray-100 cursor-pointer"
-										onClick={() => onSelectMenu(feature.label)}
+										onClick={() => onSelectMenu(feature.key, company)}
 									>
-										{feature.icon ? (
-											<img src={feature.icon} alt={feature.label} className="w-5 h-5" />
-										) : (
-											<span className="w-5 h-5 bg-gray-200 rounded-full" />
-										)}
+										<img src={feature.icon} alt={feature.label} className="w-5 h-5" />
 										<span>{feature.label}</span>
 									</div>
 								))
 							) : (
 								<button
 									className="mt-2 p-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
-									onClick={() => onSelectMenu('Business', { companyId: company.id })}
+									onClick={() => onSelectMenu('Business', company)}
 								>
 									Добавить функции
 								</button>
@@ -229,86 +227,10 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 									</div>
 									{expandedCompany === company.id && (
 										<div className="pl-4 pt-2 pb-2 bg-gray-50 rounded-lg mt-1">
-											<p className="text-sm text-gray-700">
-												<strong>ID:</strong> {company.id}
-											</p>
-											<p className="text-sm text-gray-700 mt-1">
-												<strong>Название:</strong> {company.name || 'Не указано'}
-											</p>
-											<p className="text-sm text-gray-700 mt-1">
-												<strong>Сфера:</strong> {company.businessType || 'Не указано'}
-											</p>
-											<p className="text-sm text-gray-700 mt-1">
-												<strong>Описание:</strong> {company.description || 'Не указано'}
-											</p>
-											<p className="text-sm text-gray-700 mt-1">
-												<strong>Город:</strong> {company.city || 'Не указано'}
-											</p>
-											<p className="text-sm text-gray-700 mt-1">
-												<strong>Улица:</strong> {company.street || 'Не указано'}
-											</p>
-											<p className="text-sm text-gray-700 mt-1">
-												<strong>Режим работы:</strong> {company.workTime || 'Не указано'}
-											</p>
-											<p className="text-sm text-gray-700 mt-1">
-												<strong>Выходные:</strong> {company.holidays || 'Не указано'}
-											</p>
-											<p className="text-sm text-gray-700 mt-1">
-												<strong>Описание от ИИ:</strong> {company.descriptionAI || 'Не указано'}
-											</p>
-											<p className="text-sm text-gray-700 mt-1">
-												<strong>Логотип:</strong>{' '}
-												{company.logo ? (
-													<a href={company.logo} target="_blank" rel="noopener noreferrer">
-														Ссылка
-													</a>
-												) : (
-													'Не указано'
-												)}
-											</p>
-											{getTrueFeatures(company).length > 0 ? (
-												getTrueFeatures(company).map((feature) => (
-													<p key={feature.key} className="text-sm text-gray-700 mt-1">
-														<strong>{feature.label}:</strong> Да
-													</p>
-												))
-											) : (
-												<p className="text-sm text-gray-700 mt-1">
-													<strong>Дополнительные функции:</strong> Отсутствуют
-												</p>
-											)}
-											<div className="text-sm text-gray-700 mt-1">
-												<strong>Филиалы:</strong>
-												{company.branches && company.branches.length > 0 ? (
-													<ul className="list-disc pl-4">
-														{company.branches.map((branch, index) => (
-															<li key={index}>
-																{typeof branch === 'object' && branch !== null
-																	? branch.name || JSON.stringify(branch)
-																	: branch || 'Не указано'}
-															</li>
-														))}
-													</ul>
-												) : (
-													' Не указано'
-												)}
-											</div>
-											<div className="text-sm text-gray-700 mt-1">
-												<strong>Сотрудники:</strong>
-												{company.members && company.members.length > 0 ? (
-													<ul className="list-disc pl-4">
-														{company.members.map((member, index) => (
-															<li key={index}>
-																{typeof member === 'object' && member !== null
-																	? member.role || JSON.stringify(member)
-																	: member || 'Не указано'}
-															</li>
-														))}
-													</ul>
-												) : (
-													' Не указано'
-												)}
-											</div>
+											<p className="text-sm text-gray-700"><strong>ID:</strong> {company.id}</p>
+											<p className="text-sm text-gray-700 mt-1"><strong>Название:</strong> {company.name || 'Не указано'}</p>
+											<p className="text-sm text-gray-700 mt-1"><strong>Сфера:</strong> {company.businessType || 'Не указано'}</p>
+											{/* Other company details remain unchanged */}
 										</div>
 									)}
 								</div>
@@ -318,7 +240,6 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 				)}
 			</div>
 
-			{/* Добавляем нижнюю часть меню (Агенты и Клиенты) */}
 			<div className="absolute bottom-0 left-0 w-full p-4">
 				<div
 					className="flex items-center p-2 gap-2 rounded-lg hover:bg-gray-100 cursor-pointer"

@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import RightSidebar from './components/Layout/RightSideBar';
 import MainContent from './components/Layout/MainContent';
 import Header from './components/Layout/Header';
-import { useCallback } from 'react';
 import './App.css';
 
 const Dashboard = () => {
 	const [selectedMenu, setSelectedMenu] = useState('Главная');
-	const [selectedEmployee, setSelectedEmployee] = useState(null); // Добавляем состояние для выбранного сотрудника
-	const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false); // Для свайпа
+	const [selectedEmployee, setSelectedEmployee] = useState(null);
+	const [selectedCompany, setSelectedCompany] = useState(null); // New state for selected company
+	const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
 	const [touchStart, setTouchStart] = useState(null);
 	const [touchMove, setTouchMove] = useState(null);
 
@@ -25,38 +25,39 @@ const Dashboard = () => {
 		setIsLeftSidebarOpen(value);
 	}, []);
 
-	// Обновляем функцию onSelectMenu для принятия сотрудника
-	const handleSelectMenu = (menu, employee = null) => {
+	const handleSelectMenu = (menu, data = null) => {
 		console.log('Selected Menu in Dashboard:', menu);
 		setSelectedMenu(menu);
-		setSelectedEmployee(employee);
+		if (menu === 'Business' && data) {
+			setSelectedCompany(data); // data is the company object
+			setSelectedEmployee(null);
+		} else if (menu === 'Сотрудники' && data && !data.companyId) {
+			setSelectedEmployee(data); // data is an employee object
+		} else if (data && data.id) { // For features, data is the company
+			setSelectedCompany(data);
+			setSelectedEmployee(null);
+		}
 		setIsLeftSidebarOpen(true);
 	};
 
-	// Обработка начала касания
+	// Touch event handlers remain unchanged
 	const handleTouchStart = (e) => {
 		setTouchStart(e.targetTouches[0].clientX);
 	};
 
-	// Обработка движения пальца
 	const handleTouchMove = (e) => {
 		setTouchMove(e.targetTouches[0].clientX);
 	};
 
-	// Обработка окончания касания
 	const handleTouchEnd = () => {
 		if (!touchStart || !touchMove) return;
 		const distance = touchMove - touchStart;
-		const minSwipeDistance = 50; // Минимальная дистанция для свайпа
-
+		const minSwipeDistance = 50;
 		if (distance > minSwipeDistance) {
-			// Свайп вправо — показать MainContent
 			setIsLeftSidebarOpen(true);
 		} else if (distance < -minSwipeDistance) {
-			// Свайп влево — скрыть MainContent
 			setIsLeftSidebarOpen(false);
 		}
-
 		setTouchStart(null);
 		setTouchMove(null);
 	};
@@ -82,8 +83,9 @@ const Dashboard = () => {
 			<MainContent
 				selectedMenu={selectedMenu}
 				isSidebarOpen={isLeftSidebarOpen}
-				setIsSidebarOpen={setIsSidebarOpenCallback} // Используем useCallback
+				setIsSidebarOpen={setIsSidebarOpenCallback}
 				selectedEmployee={selectedEmployee}
+				selectedCompany={selectedCompany} // Pass selectedCompany
 			/>
 		</div>
 	);
