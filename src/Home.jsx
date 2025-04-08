@@ -24,7 +24,7 @@ const HomePage = () => {
       telegramId: testTgId,
       name: testName,
     };
-
+	console.log( testTgId + " " + testName) 
     // Запрос авторизации через эндпоинт auth/oauth
     fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/oauth`, {
       method: 'POST',
@@ -36,8 +36,9 @@ const HomePage = () => {
       .then((res) => res.json())
       .then((data) => {
         // Сохраняем полученные токены
-        localStorage.setItem('accessToken', data.accessToken);
+        localStorage.setItem('token', data.accessToken);
         localStorage.setItem('refreshToken', data.refreshToken);
+		console.log( data.accessToken)
         // Запрос дополнительных данных пользователя через эндпоинт auth/me,
         // используя accessToken для авторизации
         return fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
@@ -50,9 +51,17 @@ const HomePage = () => {
       })
       .then((res) => res.json())
       .then((userInfo) => {
+		console.log( userInfo)
+		console.log("auth")
         localStorage.setItem('userInfo', JSON.stringify(userInfo));
-        // Переход на страницу Dashboard после успешной авторизации
-        navigate('/Dashboard');
+		localStorage.setItem("auth_me", JSON.stringify(userData));
+        localStorage.setItem("id", userInfo.id);
+        localStorage.setItem("telegramId", userInfo.telegramId);
+        localStorage.setItem("name", userInfo.name);
+		localStorage.setItem("user", userInfo.name);
+
+        // Переход к Dashboard через 2 секунды
+        setTimeout(() => navigate("/Dashboard"), 2000);
       })
       .catch((err) => {
         console.error('Authorization error:', err);
@@ -64,7 +73,7 @@ const HomePage = () => {
     if (isLocalhost) return;
     if (!authTriggered.current && isTelegram && userData) {
       authTriggered.current = true; // помечаем, что запрос уже выполнен
-	  setTimeout(2000);
+
       const payload = {
         telegramId: userData.user.id,
         name: userData.user.first_name,
@@ -99,7 +108,7 @@ const HomePage = () => {
           console.error('Authorization error:', err);
         });
     }
-  }, [isTelegram, userData, navigate, isLocalhost]);
+  }, 	  [isLocalhost, isTelegram, navigate, userData]);
 
   return (
     <>
