@@ -11,7 +11,7 @@ const LoginUser = () => {
     console.log("Telegram user data:", user);
     
     const formData = {
-      telegramId: user.id,
+      telegramId: String(user.id),
       name: user.first_name + (user.last_name ? ` ${user.last_name}` : ""),
     };
 
