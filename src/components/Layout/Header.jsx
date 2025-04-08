@@ -97,11 +97,14 @@ const Header = ({ onToggleLeftSidebar, selectedMenu, selectedEmployee }) => {
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
-		const storedUserData = localStorage.getItem("userData");
+		const storedUserData = localStorage.getItem("token");
+
 		if (storedUserData) {
 			try {
-				const parsedUserData = JSON.parse(storedUserData);
-				setUserData(parsedUserData);
+
+				// Устанавливаем состояние с полученным объектом
+				setUserData(storedUserData);
+
 			} catch (err) {
 				console.error("Error parsing userData:", err);
 				setError("Failed to load user data.");
@@ -111,6 +114,12 @@ const Header = ({ onToggleLeftSidebar, selectedMenu, selectedEmployee }) => {
 		}
 		setIsLoading(false);
 	}, []);
+
+	useEffect(() => {
+		if (userData) {
+			console.log("Updated user data:", userData);
+		}
+	}, [userData]);
 
 	const handleLogout = () => {
 		localStorage.removeItem("token");
@@ -122,7 +131,7 @@ const Header = ({ onToggleLeftSidebar, selectedMenu, selectedEmployee }) => {
 		navigate("/");
 	};
 
-	const token = userData?.token;
+	const token = userData; // Получаем token из userData
 
 	return (
 		<header className="fixed bottom-0 left-0 right-0 h-30 flex md:gap-4 *:items-center justify-between md:justify-normal bg-white md:bg-inherit">

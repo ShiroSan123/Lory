@@ -309,7 +309,8 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 				const response = await axiosInstance.get('/business/admin', config);
 				const businesses = response.data;
 				if (!businesses || businesses.length === 0) {
-					setError('Данные о бизнесе не найдены.');
+					console.log('[RightSidebar] fetchCompanies: No business data returned');
+					//setError('Данные о бизнесе не найдены.');
 					setCompanies([]);
 				} else {
 					const mappedBusinesses = businesses.map((business) => ({
