@@ -88,11 +88,9 @@ const HomePage = () => {
 		.then((res) => res.json())
 		.then((data) => {
 		  // Сохраняем полученные токены
+      alert("access: " + data.accessToken)
 		  localStorage.setItem('token', data.accessToken);
 		  localStorage.setItem('refreshToken', data.refreshToken);
-		  console.log( data.accessToken)
-		  // Запрос дополнительных данных пользователя через эндпоинт auth/me,
-		  // используя accessToken для авторизации
 		  return fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
 			method: 'GET',
 			headers: {
@@ -105,7 +103,6 @@ const HomePage = () => {
 		.then((userInfo) => {
 		  console.log( userInfo)
 		  console.log("auth")
-		  localStorage.setItem('userInfo', JSON.stringify(userInfo));
 		  localStorage.setItem("auth_me", JSON.stringify(userData));
 		  localStorage.setItem("id", userInfo.id);
 		  localStorage.setItem("telegramId", userInfo.telegramId);
