@@ -9,41 +9,54 @@ const LoginUser = () => {
   const isLocalhost = window.location.hostname === "localhost";
 
   // Функция для обработки авторизации (используется и для виджета, и для ручного ввода)
-  const onTelegramAuth = async (user) => {
+  const onTelegramAuth = (user) => {
     console.log("Telegram user data:", user);
 
     const formData = {
       telegramId: String(user.id || user.telegramId),  // user.telegramId для ручного ввода
-      name: user.first_name || user.name,               // user.name для ручного ввода
+      name: user.first_name || user.name,              // user.name для ручного ввода
     };
 
-    try {
-      console.log("Отправляем данные на сервер:", formData);
-      const authResponse = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/oauth`,
-        formData,
-        {
+    console.log("Отправляем данные на сервер:", formData);
+    axios
+      .post(`${import.meta.env.VITE_API_BASE_URL}/auth/oauth`, formData, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((response) => {
+        const data = response.data;
+        if (!data.accessToken) {
+          console.error("Не получен access token от сервера.");
+          throw new Error("Access token not provided");
+        }
+        // Сохраняем полученные токены и информацию о пользователе
+        localStorage.setItem("token", data.accessToken);
+        localStorage.setItem("user", JSON.stringify(data.user)); // Преобразуем объект в строку, если это объект
+        localStorage.setItem("id", data.id);
+        console.log("Saved token:", localStorage.getItem("token"));
+
+        // Выводим всю информацию userData в формате JSON
+        alert(JSON.stringify(data.userData, null, 2));
+
+        // Далее отправляем запрос к эндпоинту /auth/me для получения дополнительных данных пользователя
+        return fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${data.accessToken}`,
           },
-        }
-      );
-
-      console.log("Ответ сервера:", authResponse.data);
-      const { accessToken, user: authUser, id } = authResponse.data;
-      if (!accessToken) {
-        console.error("Не получен access token от сервера.");
-        return;
-      }
-
-      localStorage.setItem("token", accessToken);
-      localStorage.setItem("user", authUser);
-      localStorage.setItem("id", id);
-
-      setTimeout(() => navigate("/Dashboard"), 2000);
-    } catch (err) {
-      console.error("Ошибка авторизации:", err);
-    }
+        });
+      })
+      .then((meResponse) => meResponse.json())
+      .then((userData) => {
+        console.log("Дополнительные данные пользователя:", userData);
+        // Переходим к Dashboard через 2 секунды
+        setTimeout(() => navigate("/Dashboard"), 2000);
+      })
+      .catch((err) => {
+        console.error("Ошибка авторизации:", err);
+      });
   };
 
   // Обработка отправки формы при ручном вводе
