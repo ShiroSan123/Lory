@@ -15,13 +15,18 @@ export const MainContent = memo(({
 	const navigate = useNavigate();
 	const [isSwiped, setIsSwiped] = useState(false);
 
-	// Company states
+	// Company states (были ранее)
 	const [companyData, setCompanyData] = useState(null);
 	const [updateError, setUpdateError] = useState('');
 	const [updateSuccess, setUpdateSuccess] = useState('');
 	const [isEditing, setIsEditing] = useState(false);
 
-	// Registration states
+	// Новые состояния для Business, вынесенные на верхний уровень
+	const [companyDataFromApi, setCompanyDataFromApi] = useState(null);
+	const [fetchError, setFetchError] = useState('');
+	const [isFetching, setIsFetching] = useState(false);
+
+	// Registration states (были ранее)
 	const initialFormData = {
 		name: '',
 		description: '',
@@ -41,12 +46,23 @@ export const MainContent = memo(({
 	const [businesses, setBusinesses] = useState([]);
 	const [isChoosingDescription, setIsChoosingDescription] = useState(false);
 
-	// Новые состояния для товаров
+	// Остальные состояния остаются без изменений
 	const [companies, setCompanies] = useState([]);
 	const [services, setServices] = useState({});
-
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [selectedCompanyId, setSelectedCompanyId] = useState(null);
+	const [isConfiguring, setIsConfiguring] = useState(false);
+	const [configData, setConfigData] = useState({
+		analytics: false,
+		products: false,
+		menu: false,
+		calendar: false,
+		masters: false,
+		delivery: false,
+	});
+
+	const [registeredBusinessId, setRegisteredBusinessId] = useState(null);
+	const [configError, setConfigError] = useState('');
 
 	const openModalForService = (companyId) => {
 		setSelectedCompanyId(companyId);
@@ -58,12 +74,12 @@ export const MainContent = memo(({
 		setSelectedCompanyId(null);
 	};
 
-	const steps = ['name', 'description', 'type', 'theme'];
+	const steps = ['name', 'type', 'description', 'theme'];
 
 	const stepQuestions = {
 		name: 'Как называется твой бизнес? (обязательное поле)',
-		description: 'Расскажи немного о своем бизнесе.',
 		type: 'Выбери тип бизнеса:',
+		description: 'Расскажи немного о своем бизнесе.',
 		theme: 'Выбери цветовую тему для бизнеса:',
 	};
 
@@ -81,6 +97,10 @@ export const MainContent = memo(({
 		chooseDescription: [
 			{ label: 'Использовать мое описание', value: 'user' },
 			{ label: 'Использовать описание ИИ', value: 'ai' },
+		],
+		configureChoice: [
+			{ label: 'Оставить как есть', value: 'keep' },
+			{ label: 'Настроить', value: 'configure' },
 		],
 	};
 
@@ -101,14 +121,12 @@ export const MainContent = memo(({
 	}, [token, baseUrl]);
 
 	// Функция для добавления новой услуги
-	// Функция для добавления новой услуги
 	const addService = useCallback(async (businessId, serviceData) => {
-		// Формируем объект новой услуги в соответствии с ожидаемой структурой API
 		const newService = {
 			moduleType: "MENU",
 			customParameters: {
 				displayType: "list",
-				categories: ["Entrées"], // Можно сделать динамическим в будущем
+				categories: ["Entrées"],
 				items: [{
 					name: serviceData.name,
 					description: serviceData.description,
@@ -118,30 +136,28 @@ export const MainContent = memo(({
 		};
 
 		try {
-			// Отправляем запрос на добавление услуги
 			const response = await axios.post(
 				`${baseUrl}/services/${businessId}`,
 				newService,
 				{ headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
 			);
 
-			// После успешного добавления обновляем список услуг
 			setServices(prev => ({
 				...prev,
 				[businessId]: [
-					...(prev[businessId] || []), // Сохраняем существующие услуги
-					newService.customParameters.items[0], // Добавляем новую услугу
+					...(prev[businessId] || []),
+					newService.customParameters.items[0],
 				],
 			}));
 
-			closeModal(); // Закрываем модальное окно
+			closeModal();
 		} catch (err) {
 			setError(err.response?.data?.message || 'Ошибка при добавлении услуги.');
 			console.error('[addService] Error:', err.response?.data || err.message);
 		}
 	}, [token, baseUrl]);
 
-	// Функция для получения услуг компании (оставим для проверки)
+	// Функция для получения услуг компании
 	const fetchServices = useCallback(async (businessId) => {
 		try {
 			const response = await axios.get(
@@ -150,7 +166,6 @@ export const MainContent = memo(({
 			);
 			console.log(`[fetchServices] Response for businessId ${businessId}:`, response.data);
 
-			// Извлекаем все элементы items из ответа
 			const items = response.data.flatMap(service =>
 				service.customParameters?.items || []
 			);
@@ -316,18 +331,27 @@ export const MainContent = memo(({
 				formPayload,
 				{ headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
 			);
-			addMessage({ sender: 'bot', text: 'Бизнес успешно зарегистрирован!' });
+			console.log('[handleSubmit] Business registered:', response.data);
+			// Проверяем возможные ключи для ID
+			const businessId = response.data.id || response.data.businessId || response.data._id;
+			if (!businessId) {
+				throw new Error('ID бизнеса не получен от сервера.');
+			}
+			setRegisteredBusinessId(businessId);
+			addMessage({ sender: 'bot', text: `Бизнес успешно зарегистрирован! ID: ${businessId}` });
+			addMessage({ sender: 'bot', text: 'Хочешь оставить как есть или настроить?' });
+			setShowButtons(true);
+			setButtonOptions(buttonOptionsMap.configureChoice);
 			setResponseMessage('Бизнес успешно зарегистрирован!');
-			await fetchBusinesses(addMessage);
-			setTimeout(() => navigate('/Dashboard'), 2000);
 		} catch (err) {
-			const errorMessage = err.response?.data?.message || 'Ошибка при регистрации.';
+			const errorMessage = err.response?.data?.message || 'Ошибка при регистрации: ' + err.message;
+			console.error('[handleSubmit] Error:', err);
 			setError(errorMessage);
 			addMessage({ sender: 'bot', text: errorMessage });
 		} finally {
 			setIsRegistering(false);
 		}
-	}, [formData, token, navigate, baseUrl]);
+	}, [formData, token, baseUrl]);
 
 	const fetchBusinesses = useCallback(async (addMessage) => {
 		try {
@@ -350,6 +374,57 @@ export const MainContent = memo(({
 		}
 	}, [token, baseUrl]);
 
+	const submitConfig = useCallback(async (addMessage) => {
+		console.log('[submitConfig] Starting with businessId:', registeredBusinessId);
+		console.log('[submitConfig] Config data:', configData);
+
+		if (!registeredBusinessId) {
+			const errorMsg = 'ID бизнеса не найден. Попробуйте зарегистрировать бизнес заново.';
+			setConfigError(errorMsg);
+			addMessage({ sender: 'bot', text: errorMsg });
+			console.error('[submitConfig] No businessId');
+			return;
+		}
+
+		try {
+			if (configData.menu || configData.products) {
+				const servicePayload = {
+					moduleType: "MENU",
+					customParameters: {
+						displayType: "list",
+						categories: ["Entrées"],
+						items: [
+							{
+								name: "Пример продукта",
+								description: "Описание примера",
+								price: 10.0,
+							},
+						],
+					},
+				};
+				console.log('[submitConfig] Sending service payload:', servicePayload);
+				const response = await axios.post(
+					`${baseUrl}/services/${registeredBusinessId}`,
+					servicePayload,
+					{ headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+				);
+				console.log('[submitConfig] Service added:', response.data);
+				addMessage({ sender: 'bot', text: 'Модуль успешно добавлен!' });
+			}
+			// Здесь можно добавить логику для других модулей (аналитика, календарь, мастера, доставка)
+			addMessage({ sender: 'bot', text: 'Настройки успешно применены!' });
+			setTimeout(() => {
+				console.log('[submitConfig] Navigating to /Dashboard');
+				navigate('/Dashboard');
+			}, 2000);
+		} catch (err) {
+			const errorMessage = err.response?.data?.message || 'Ошибка при сохранении настроек: ' + err.message;
+			console.error('[submitConfig] Error:', err);
+			setConfigError(errorMessage);
+			addMessage({ sender: 'bot', text: errorMessage });
+		}
+	}, [configData, registeredBusinessId, token, baseUrl, navigate]);
+
 	const handleButtonClick = useCallback((value, addMessage) => {
 		addMessage({ sender: 'user', text: value });
 
@@ -362,20 +437,31 @@ export const MainContent = memo(({
 			}
 			setIsChoosingDescription(false);
 			proceedToNextStep(addMessage);
+		} else if (registeredBusinessId && buttonOptionsMap.configureChoice.some(opt => opt.value === value)) {
+			if (value === 'keep') {
+				addMessage({ sender: 'bot', text: 'Отлично, бизнес зарегистрирован без дополнительных настроек!' });
+				setTimeout(() => navigate('/Dashboard'), 2000);
+			} else if (value === 'configure') {
+				setIsConfiguring(true);
+				addMessage({ sender: 'bot', text: 'Давай настроим твой бизнес. Укажи, что хочешь включить.' });
+			}
+			setShowButtons(false);
 		} else {
 			updateFormData(steps[step - 1], value);
 			proceedToNextStep(addMessage);
 		}
-	}, [isChoosingDescription, steps, step, updateFormData, proceedToNextStep]);
+	}, [isChoosingDescription, steps, step, updateFormData, proceedToNextStep, registeredBusinessId, navigate]);
 
 	const getBotMessage = useCallback(() => {
 		if (isRegistering) return 'Регистрирую твой бизнес...';
 		if (localLoading) return 'Генерирую описание...';
+		if (isConfiguring) return 'Укажи, что хочешь включить в настройках.';
+		if (configError) return configError;
 		if (responseMessage) return responseMessage;
 		if (error) return error;
 		if (isChoosingDescription) return 'Какое описание ты хочешь использовать?';
 		return stepQuestions[steps[step - 1]];
-	}, [isRegistering, localLoading, responseMessage, error, isChoosingDescription, step]);
+	}, [isRegistering, localLoading, isConfiguring, configError, responseMessage, error, isChoosingDescription, step]);
 
 	const startRegistration = useCallback(() => {
 		setStep(1);
@@ -387,6 +473,9 @@ export const MainContent = memo(({
 		setShowButtons(false);
 		setButtonOptions([]);
 		setIsChoosingDescription(false);
+		setIsConfiguring(false);
+		setRegisteredBusinessId(null);
+		setConfigError('');
 	}, []);
 
 	const handleUpdateCompany = useCallback(async (companyId) => {
@@ -427,9 +516,89 @@ export const MainContent = memo(({
 						showButtons={showButtons}
 						buttonOptions={buttonOptions}
 						onButtonClick={handleButtonClick}
-						isLoading={localLoading}
+						isLoading={localLoading || isRegistering}
 						startRegistration={startRegistration}
-					/>
+					>
+						{(addMessage) => (
+							<>
+								{isConfiguring && (
+									<div className="mt-4 p-4 bg-gray-100 rounded-lg">
+										<h3 className="text-lg font-bold mb-2">Настройка бизнеса</h3>
+										<div className="space-y-2">
+											<label className="flex items-center">
+												<input
+													type="checkbox"
+													checked={configData.analytics}
+													onChange={(e) => setConfigData(prev => ({ ...prev, analytics: e.target.checked }))}
+													className="mr-2"
+												/>
+												Аналитика
+											</label>
+											{formData.type === 'RESTAURANT' ? (
+												<label className="flex items-center">
+													<input
+														type="checkbox"
+														checked={configData.menu}
+														onChange={(e) => setConfigData(prev => ({ ...prev, menu: e.target.checked }))}
+														className="mr-2"
+													/>
+													Меню
+												</label>
+											) : (
+												<label className="flex items-center">
+													<input
+														type="checkbox"
+														checked={configData.products}
+														onChange={(e) => setConfigData(prev => ({ ...prev, products: e.target.checked }))}
+														className="mr-2"
+													/>
+													Товары
+												</label>
+											)}
+											<label className="flex items-center">
+												<input
+													type="checkbox"
+													checked={configData.calendar}
+													onChange={(e) => setConfigData(prev => ({ ...prev, calendar: e.target.checked }))}
+													className="mr-2"
+												/>
+												Календарь
+											</label>
+											<label className="flex items-center">
+												<input
+													type="checkbox"
+													checked={configData.masters}
+													onChange={(e) => setConfigData(prev => ({ ...prev, masters: e.target.checked }))}
+													className="mr-2"
+												/>
+												Мастера
+											</label>
+											{formData.type === 'RESTAURANT' && (
+												<label className="flex items-center">
+													<input
+														type="checkbox"
+														checked={configData.delivery}
+														onChange={(e) => setConfigData(prev => ({ ...prev, delivery: e.target.checked }))}
+														className="mr-2"
+													/>
+													Доставка
+												</label>
+											)}
+										</div>
+										<button
+											onClick={() => {
+												console.log('[Save Button] Clicked');
+												submitConfig(addMessage);
+											}}
+											className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
+										>
+											Сохранить настройки
+										</button>
+									</div>
+								)}
+							</>
+						)}
+					</ChatBot>
 				);
 			case 'Сотрудники':
 				return (
@@ -624,16 +793,12 @@ export const MainContent = memo(({
 							))
 						)}
 
-						{/* Modal for adding a new service */}
 						{isModalOpen && (
 							<div className="fixed inset-0 z-50 flex items-center justify-center">
-								{/* Darkened Background Overlay */}
 								<div
 									className="absolute inset-0 bg-black opacity-25"
 									onClick={closeModal}
 								></div>
-
-								{/* Modal Content */}
 								<div className="relative bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
 									<h2 className="text-xl font-bold mb-4">Добавить новый товар</h2>
 									<form
@@ -701,19 +866,78 @@ export const MainContent = memo(({
 					</div>
 				);
 			case 'Business':
-				const savedCompanies = JSON.parse(localStorage.getItem('companies')) || [];
 				const companyId = selectedEmployee?.companyId;
-				// Fallback to JSON data if no companyId or no match in localStorage
-				const companyFromJson = businesses.find(b => b.id === companyId) || businesses[0]; // Default to first company if no match
-				const company = savedCompanies.find(c => c.id === companyId) || companyFromJson;
 
-				if (!company) {
-					return <div className="p-4">Компания не найдена</div>;
-				}
+				// Функция для получения данных компании
+				const fetchCompanyData = useCallback(async () => {
+					if (!companyId || !token) {
+						setFetchError('Отсутствует ID компании или токен авторизации');
+						return;
+					}
 
-				if (!companyData) {
-					setCompanyData(company);
-				}
+					setIsFetching(true);
+					setFetchError('');
+
+					try {
+						const response = await axios.get(
+							`${baseUrl}/business/admin`,
+							{
+								headers: {
+									'Authorization': `Bearer ${token}`,
+									'Content-Type': 'application/json'
+								}
+							}
+						);
+
+						const businesses = response.data;
+						const selectedCompany = businesses.find(b => b.id === companyId) || businesses[0];
+
+						if (!selectedCompany) {
+							setFetchError('Компания не найдена в списке');
+							return;
+						}
+
+						const normalizedCompany = {
+							id: selectedCompany.id,
+							name: selectedCompany.name || 'Не указано',
+							description: selectedCompany.description || 'Не указано',
+							type: selectedCompany.type || selectedCompany.businessType || 'Не указано',
+							theme: selectedCompany.theme || { color: 'Не указано' },
+							calendar: selectedCompany.calendar || false,
+							analytics: selectedCompany.analytics || false,
+							telegram: selectedCompany.telegram || false,
+							aiText: selectedCompany.aiText || false,
+							socials: selectedCompany.socials || false,
+							delivery: selectedCompany.delivery || false,
+							createdAt: selectedCompany.createdAt,
+							updatedAt: selectedCompany.updatedAt,
+							ownerId: selectedCompany.ownerId
+						};
+
+						setCompanyDataFromApi(normalizedCompany);
+						setCompanyData(normalizedCompany);
+						const savedCompanies = JSON.parse(localStorage.getItem('companies')) || [];
+						const updatedCompanies = savedCompanies.some(c => c.id === normalizedCompany.id)
+							? savedCompanies.map(c => c.id === normalizedCompany.id ? normalizedCompany : c)
+							: [...savedCompanies, normalizedCompany];
+						localStorage.setItem('companies', JSON.stringify(updatedCompanies));
+					} catch (err) {
+						const errorMessage = err.response?.data?.message || 'Ошибка при загрузке данных компании';
+						setFetchError(errorMessage);
+						const savedCompanies = JSON.parse(localStorage.getItem('companies')) || [];
+						const cachedCompany = savedCompanies.find(c => c.id === companyId);
+						if (cachedCompany) {
+							setCompanyDataFromApi(cachedCompany);
+							setCompanyData(cachedCompany);
+						}
+					} finally {
+						setIsFetching(false);
+					}
+				}, [companyId, token, baseUrl]);
+
+				useEffect(() => {
+					fetchCompanyData();
+				}, [fetchCompanyData]);
 
 				const confirmSaveChanges = () => {
 					if (window.confirm('Вы уверены, что хотите сохранить изменения?')) {
@@ -721,11 +945,26 @@ export const MainContent = memo(({
 					}
 				};
 
+				const formatBoolean = (value) => value === 'true' || value === true ? 'Да' : 'Нет';
+
+				if (isFetching) {
+					return <div className="p-4">Загрузка данных компании...</div>;
+				}
+
+				if (fetchError && !companyDataFromApi) {
+					return <div className="p-4 text-red-600">{fetchError}</div>;
+				}
+
+				if (!companyDataFromApi) {
+					return <div className="p-4">Данные компании отсутствуют</div>;
+				}
+
 				return (
 					<div className="p-4">
-						<h1 className="text-xl font-bold mb-4">Компания: {company.name}</h1>
+						<h1 className="text-xl font-bold mb-4">Компания: {companyDataFromApi.name}</h1>
 						{updateError && <p className="text-red-600 mb-4">{updateError}</p>}
 						{updateSuccess && <p className="text-green-600 mb-4">{updateSuccess}</p>}
+						{fetchError && <p className="text-red-600 mb-4">{fetchError} (используются кэшированные данные)</p>}
 
 						{isEditing ? (
 							<div className="grid grid-cols-1 gap-4">
@@ -749,21 +988,93 @@ export const MainContent = memo(({
 								</div>
 								<div>
 									<label className="block text-sm font-medium text-gray-700">Тип бизнеса</label>
-									<input
-										type="text"
+									<select
 										value={companyData?.type || ''}
 										onChange={(e) => setCompanyData({ ...companyData, type: e.target.value })}
 										className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-									/>
+									>
+										<option value="SERVICE">Услуги</option>
+										<option value="RESTAURANT">Ресторан</option>
+										<option value="REAL_ESTATE">Недвижимость</option>
+									</select>
 								</div>
 								<div>
 									<label className="block text-sm font-medium text-gray-700">Цветовая тема</label>
-									<input
-										type="text"
+									<select
 										value={companyData?.theme?.color || ''}
-										onChange={(e) => setCompanyData({ ...companyData, theme: { color: e.target.value } })}
+										onChange={(e) => setCompanyData({ ...companyData, theme: { ...companyData.theme, color: e.target.value } })}
 										className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-									/>
+									>
+										<option value="blue">Синий</option>
+										<option value="green">Зеленый</option>
+										<option value="red">Красный</option>
+									</select>
+								</div>
+								<div>
+									<label className="flex items-center">
+										<input
+											type="checkbox"
+											checked={companyData?.calendar || false}
+											onChange={(e) => setCompanyData({ ...companyData, calendar: e.target.checked })}
+											className="mr-2"
+										/>
+										Календарь
+									</label>
+								</div>
+								<div>
+									<label className="flex items-center">
+										<input
+											type="checkbox"
+											checked={companyData?.analytics || false}
+											onChange={(e) => setCompanyData({ ...companyData, analytics: e.target.checked })}
+											className="mr-2"
+										/>
+										Аналитика
+									</label>
+								</div>
+								<div>
+									<label className="flex items-center">
+										<input
+											type="checkbox"
+											checked={companyData?.telegram || false}
+											onChange={(e) => setCompanyData({ ...companyData, telegram: e.target.checked })}
+											className="mr-2"
+										/>
+										Сотрудники
+									</label>
+								</div>
+								<div>
+									<label className="flex items-center">
+										<input
+											type="checkbox"
+											checked={companyData?.aiText || false}
+											onChange={(e) => setCompanyData({ ...companyData, aiText: e.target.checked })}
+											className="mr-2"
+										/>
+										LoryAI
+									</label>
+								</div>
+								<div>
+									<label className="flex items-center">
+										<input
+											type="checkbox"
+											checked={companyData?.socials || false}
+											onChange={(e) => setCompanyData({ ...companyData, socials: e.target.checked })}
+											className="mr-2"
+										/>
+										Клиенты
+									</label>
+								</div>
+								<div>
+									<label className="flex items-center">
+										<input
+											type="checkbox"
+											checked={companyData?.delivery || false}
+											onChange={(e) => setCompanyData({ ...companyData, delivery: e.target.checked })}
+											className="mr-2"
+										/>
+										Доставка
+									</label>
 								</div>
 								<div className="flex space-x-2">
 									<button
@@ -783,49 +1094,63 @@ export const MainContent = memo(({
 						) : (
 							<div className="p-6">
 								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">ID:</strong> {company.id}
+									<strong className="font-semibold">ID:</strong> {companyDataFromApi.id}
 								</p>
 								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Название:</strong> {company.name || 'Не указано'}
+									<strong className="font-semibold">Название:</strong> {companyDataFromApi.name}
 								</p>
 								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Описание:</strong> {company.description || 'Не указано'}
+									<strong className="font-semibold">Описание:</strong> {companyDataFromApi.description}
 								</p>
 								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Тип бизнеса:</strong> {company.type || 'Не указано'}
+									<strong className="font-semibold">Тип бизнеса:</strong> {companyDataFromApi.type}
 								</p>
 								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Цветовая тема:</strong> {company.theme?.color || 'Не указано'}
+									<strong className="font-semibold">Цветовая тема:</strong> {companyDataFromApi.theme.color}
 								</p>
 								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Режим работы:</strong>
-									{company.workingHours && company.workingHours.length > 0 ? (
-										<ul className="list-disc pl-4 mt-1">
-											{company.workingHours.map((hours, index) => (
-												<li key={index}>{`${hours.day}: ${hours.start} - ${hours.end}`}</li>
-											))}
-										</ul>
-									) : (
-										' Не указано'
-									)}
+									<strong className="font-semibold">Календарь:</strong> {formatBoolean(companyDataFromApi.calendar)}
 								</p>
 								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Владелец (ID):</strong> {company.ownerId || 'Не указано'}
+									<strong className="font-semibold">Аналитика:</strong> {formatBoolean(companyDataFromApi.analytics)}
+								</p>
+								<p className="text-base text-gray-800 mb-3">
+									<strong className="font-semibold">Сотрудники:</strong> {formatBoolean(companyDataFromApi.telegram)}
+								</p>
+								<p className="text-base text-gray-800 mb-3">
+									<strong className="font-semibold">LoryAI:</strong> {formatBoolean(companyDataFromApi.aiText)}
+								</p>
+								<p className="text-base text-gray-800 mb-3">
+									<strong className="font-semibold">Клиенты:</strong> {formatBoolean(companyDataFromApi.socials)}
+								</p>
+								<p className="text-base text-gray-800 mb-3">
+									<strong className="font-semibold">Доставка:</strong> {formatBoolean(companyDataFromApi.delivery)}
+								</p>
+								<p className="text-base text-gray-800 mb-3">
+									<strong className="font-semibold">Владелец (ID):</strong> {companyDataFromApi.ownerId || 'Не указано'}
 								</p>
 								<p className="text-base text-gray-800 mb-3">
 									<strong className="font-semibold">Дата создания:</strong>{' '}
-									{company.createdAt ? new Date(company.createdAt).toLocaleString() : 'Не указано'}
+									{companyDataFromApi.createdAt ? new Date(companyDataFromApi.createdAt).toLocaleString() : 'Не указано'}
 								</p>
 								<p className="text-base text-gray-800 mb-3">
 									<strong className="font-semibold">Дата обновления:</strong>{' '}
-									{company.updatedAt ? new Date(company.updatedAt).toLocaleString() : 'Не указано'}
+									{companyDataFromApi.updatedAt ? new Date(companyDataFromApi.updatedAt).toLocaleString() : 'Не указано'}
 								</p>
-								<button
-									onClick={() => setIsEditing(true)}
-									className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
-								>
-									Изменить
-								</button>
+								<div className="flex space-x-2">
+									<button
+										onClick={() => setIsEditing(true)}
+										className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
+									>
+										Изменить
+									</button>
+									<button
+										onClick={fetchCompanyData}
+										className="mt-4 px-4 py-2 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600"
+									>
+										Обновить данные
+									</button>
+								</div>
 							</div>
 						)}
 					</div>
@@ -839,8 +1164,7 @@ export const MainContent = memo(({
 		<main
 			ref={mainRef}
 			onClick={() => setIsSwiped(true)}
-			className={`md:fixed rounded-br-2xl bg-white pr-4 md:pt-2 md:px-6 md:left-0 w-screen md:w-[calc(100vw-17rem)] h-[calc(100vh-136px)] overflow-y-auto overflow-x-hidden transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-full' : '-translate-x-0'
-				} ${!isSidebarOpen ? 'md:hidden' : 'md:block'} md:translate-x-0 z-10`}
+			className={`md:fixed rounded-br-2xl bg-white pr-4 md:pt-2 md:px-6 md:left-0 w-screen md:w-[calc(100vw-17rem)] h-[calc(100vh-136px)] overflow-y-auto overflow-x-hidden transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-full' : '-translate-x-0'} ${!isSidebarOpen ? 'md:hidden' : 'md:block'} md:translate-x-0 z-10`}
 		>
 			{isLoading ? <div className="p-4">Loading...</div> : renderMainContent()}
 		</main>
