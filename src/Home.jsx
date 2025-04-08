@@ -70,60 +70,66 @@ const HomePage = () => {
 
   useEffect(() => {
     // Если приложение запущено на localhost, не выполняем автоавторизацию
-    if (isLocalhost) return;
-    if (!authTriggered.current && isTelegram && userData) {
-      authTriggered.current = true; // помечаем, что запрос уже выполнен
+    if (window.location.hostname === 'localhost') return;
   
-      // Задержка 1 секунда перед выполнением запроса авторизации
-      setTimeout(() => {
-        const payload = {
-          telegramId: userData.user.id,
-          name: userData.user.first_name,
-        };
-        fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/oauth`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        })
-        .then((response) => response.json()) // Преобразуем ответ в JSON
-        .then((data) => {
-          // Сохраняем полученные токены
-          localStorage.setItem('token', data.accessToken);
-          localStorage.setItem('refreshToken', data.refreshToken);
-          alert("token: " + data.accessToken);
-        
-          // Запрос дополнительных данных пользователя
-          return fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
+    // Убедимся, что Telegram данные доступны
+    if (isTelegram && userData) {
+      const doAuth = async () => {
+        try {
+          // Ждем 1 секунду перед авторизацией (если требуется задержка)
+          await new Promise(resolve => setTimeout(resolve, 1000));
+  
+          const payload = {
+            telegramId: userData.user.id,
+            name: userData.user.first_name,
+          };
+  
+          // Авторизация через endpoint auth/oauth
+          const authResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/oauth`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+  
+          const authData = await authResponse.json();
+  
+          // Сохраняем токены
+          localStorage.setItem('token', authData.accessToken);
+          localStorage.setItem('refreshToken', authData.refreshToken);
+          alert("token: " + authData.accessToken);
+  
+          // Запрашиваем дополнительные данные пользователя через auth/me
+          const meResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${data.accessToken}`,
+              'Authorization': `Bearer ${authData.accessToken}`,
             },
           });
-        })
-        .then((res) => res.json())
-        .then((userInfo) => {
-          console.log(userInfo);
-          console.log("auth");
-          localStorage.setItem('userInfo', JSON.stringify(userInfo));
-          localStorage.setItem("auth_me", JSON.stringify(userData));
-            localStorage.setItem("id", userInfo.id);
-            localStorage.setItem("telegramId", userInfo.telegramId);
-            localStorage.setItem("name", userInfo.name);
+  
+          const userInfo = await meResponse.json();
+          console.log("Полученные данные auth:", userInfo);
+  
+          // Сохраняем данные пользователя
+          localStorage.setItem("auth_me", JSON.stringify(userData)); // Если нужно именно telegram данные, или можно заменить на userInfo
+          localStorage.setItem("id", userInfo.id);
+          localStorage.setItem("telegramId", userInfo.telegramId);
+          localStorage.setItem("name", userInfo.name);
           localStorage.setItem("user", userInfo.name);
-        
+  
           // Переход к Dashboard через 2 секунды
           setTimeout(() => navigate("/Dashboard"), 2000);
-        })
-        .catch((err) => {
+        } catch (err) {
           console.error('Authorization error:', err);
-        });
-        
-      }, 1000);
+        }
+      };
+  
+      doAuth();
     }
-  }, [isLocalhost, isTelegram, navigate, userData]);
+  }, [isTelegram, userData, navigate]);
+  
 
   return (
     <>
