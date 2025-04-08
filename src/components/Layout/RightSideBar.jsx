@@ -253,9 +253,13 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 
 			<div className="p-4 border-t border-gray-200 shrink-0">
 				<div className="flex items-center gap-3">
-					<img src="/ico/user-profile.svg" alt="User Profile" className="w-10 h-10 rounded-full" />
+					<img
+						src={localStorage.getItem("photo")}
+						alt="User Profile"
+						className="w-10 h-10 rounded-full"
+					/>
 					<div>
-						<p className="text-sm font-medium text-gray-800">Grigo_Ayaal</p>
+						<p className="text-sm font-medium text-gray-800">{localStorage.getItem("name")}</p>
 						<p className="text-xs text-gray-500">Администратор</p>
 					</div>
 				</div>

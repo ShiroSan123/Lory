@@ -82,6 +82,9 @@ const HomePage = () => {
             telegramId: String(userData.user.id),
             name: userData.user.first_name,
           };
+
+          localStorage.setItem("photo", userData.photo_url)
+          alert(userData.photo_url)
   
           // Авторизация через endpoint auth/oauth
           const authResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/oauth`, {
