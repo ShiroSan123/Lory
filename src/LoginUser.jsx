@@ -1,18 +1,20 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const LoginUser = () => {
-	const navigate = useNavigate();
-	const telegramButtonRef = useRef(null);
+  const navigate = useNavigate();
+  const telegramButtonRef = useRef(null);
+  const [manualAuth, setManualAuth] = useState({ telegramId: "", name: "" });
+  const isLocalhost = window.location.hostname === "localhost";
 
   // Функция для обработки авторизации (используется и для виджета, и для ручного ввода)
   const onTelegramAuth = (user) => {
     console.log("Telegram user data:", user);
 
     const formData = {
-      telegramId: String(user.id || user.telegramId),  // user.telegramId для ручного ввода
-      name: user.first_name || user.name,              // user.name для ручного ввода
+      telegramId: String(user.id || user.telegramId), // user.telegramId для ручного ввода
+      name: user.first_name || user.name,             // user.name для ручного ввода
     };
 
     console.log("Отправляем данные на сервер:", formData);
@@ -30,14 +32,14 @@ const LoginUser = () => {
         }
         // Сохраняем полученные токены и информацию о пользователе
         localStorage.setItem("token", data.accessToken);
-        localStorage.setItem("user", JSON.stringify(data.user)); // Преобразуем объект в строку, если это объект
+        localStorage.setItem("user", JSON.stringify(data.user));
         localStorage.setItem("id", data.id);
         console.log("Saved token:", localStorage.getItem("token"));
 
-        // Выводим всю информацию userData в формате JSON
+        // Можно, например, показать данные, полученные с OAuth
         alert(JSON.stringify(data.userData, null, 2));
 
-        // Далее отправляем запрос к эндпоинту /auth/me для получения дополнительных данных пользователя
+        // Отправляем запрос к эндпоинту /auth/me для получения дополнительных данных пользователя
         return fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
           method: "GET",
           headers: {
@@ -49,7 +51,14 @@ const LoginUser = () => {
       .then((meResponse) => meResponse.json())
       .then((userData) => {
         console.log("Дополнительные данные пользователя:", userData);
-        // Переходим к Dashboard через 2 секунды
+        // Сохраняем дополнительные данные, полученные с /auth/me, в localStorage
+        localStorage.setItem("auth_me", JSON.stringify(userData));
+        localStorage.setItem("id", userData.id);
+        localStorage.setItem("telegramId", userData.telegramId);
+        localStorage.setItem("authProvider", userData.authProvider);
+        localStorage.setItem("name", userData.name);
+
+        // Переход к Dashboard через 2 секунды
         setTimeout(() => navigate("/Dashboard"), 2000);
       })
       .catch((err) => {
@@ -57,35 +66,80 @@ const LoginUser = () => {
       });
   };
 
-	// Регистрируем функцию в глобальной области для вызова из виджета Telegram
-	useEffect(() => {
-		window.onTelegramAuth = onTelegramAuth;
+  // Обработка отправки формы при ручном вводе
+  const handleManualSubmit = (e) => {
+    e.preventDefault();
+    // Имитация данных пользователя, аналогичных Telegram
+    const fakeUser = {
+      telegramId: manualAuth.telegramId,
+      name: manualAuth.name,
+    };
+    onTelegramAuth(fakeUser);
+  };
 
-		// Создаем и вставляем скрипт Telegram виджета
-		const script = document.createElement("script");
-		script.src = "https://telegram.org/js/telegram-widget.js?22";
-		script.async = true;
-		script.setAttribute("data-telegram-login", "lorythebimsbot");
-		script.setAttribute("data-size", "large");
-		script.setAttribute("data-onauth", "onTelegramAuth(user)");
-		// Опционально, можно добавить еще атрибуты, например, data-userpic или data-request-access
+  // Регистрируем функцию в глобальной области для вызова из виджета Telegram
+  useEffect(() => {
+    if (!isLocalhost) {
+      // Регистрируем функцию в глобальной области для вызова из виджета Telegram
+      window.onTelegramAuth = onTelegramAuth;
 
-		if (telegramButtonRef.current) {
-			telegramButtonRef.current.appendChild(script);
-		}
-	}, []);
+      // Создаем и вставляем скрипт Telegram виджета
+      const script = document.createElement("script");
+      script.src = "https://telegram.org/js/telegram-widget.js?22";
+      script.async = true;
+      script.setAttribute("data-telegram-login", "lorythebimsbot");
+      script.setAttribute("data-size", "large");
+      script.setAttribute("data-onauth", "onTelegramAuth(user)");
 
-	return (
-		<div className="min-h-screen flex items-center justify-center bg-gray-100">
-			<div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md flex flex-col items-center">
-				<h2 className="text-2xl font-bold mb-6 text-center">
-					Вход через Telegram
-				</h2>
-				{/* Контейнер для виджета Telegram */}
-				<div id="telegram-button-container" ref={telegramButtonRef}></div>
-			</div>
-		</div>
-	);
+      if (telegramButtonRef.current) {
+        telegramButtonRef.current.appendChild(script);
+      }
+    }
+  }, [isLocalhost]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md flex flex-col items-center">
+        <h2 className="text-2xl font-bold mb-6 text-center">
+          Вход через Telegram
+        </h2>
+        {isLocalhost ? (
+          // Форма для ручного ввода, если мы на localhost
+          <form onSubmit={handleManualSubmit} className="w-full flex flex-col gap-4">
+            <input
+              type="text"
+              placeholder="Telegram ID"
+              value={manualAuth.telegramId}
+              onChange={(e) =>
+                setManualAuth({ ...manualAuth, telegramId: e.target.value })
+              }
+              className="border p-2 rounded"
+              required
+            />
+            <input
+              type="text"
+              placeholder="Имя пользователя"
+              value={manualAuth.name}
+              onChange={(e) =>
+                setManualAuth({ ...manualAuth, name: e.target.value })
+              }
+              className="border p-2 rounded"
+              required
+            />
+            <button
+              type="submit"
+              className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+            >
+              Войти
+            </button>
+          </form>
+        ) : (
+          // Контейнер для виджета Telegram, если не localhost
+          <div id="telegram-button-container" ref={telegramButtonRef}></div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default LoginUser;
