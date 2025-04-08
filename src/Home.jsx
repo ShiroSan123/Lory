@@ -32,13 +32,13 @@ const HomePage = () => {
       })
         .then((res) => {
 			alert(userData.user.id + " " + userData.user.first_name)
-			alert(JSON.stringify(res, null, 2))
           if (!res.ok) {
             throw new Error('Authorization failed');
           }
           return res.json();
         })
         .then((data) => {
+			alert(JSON.stringify(data, null, 2))
           // Сохраняем полученные токены
           localStorage.setItem('accessToken', data.accessToken);
           localStorage.setItem('refreshToken', data.refreshToken);
