@@ -1,12 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const LoginUser = () => {
-  const navigate = useNavigate();
-  const telegramButtonRef = useRef(null);
-  const [manualAuth, setManualAuth] = useState({ telegramId: "", name: "" });
-  const isLocalhost = window.location.hostname === "localhost";
+	const navigate = useNavigate();
+	const telegramButtonRef = useRef(null);
 
   // Функция для обработки авторизации (используется и для виджета, и для ручного ввода)
   const onTelegramAuth = (user) => {
@@ -59,81 +57,35 @@ const LoginUser = () => {
       });
   };
 
-  // Обработка отправки формы при ручном вводе
-  const handleManualSubmit = (e) => {
-    e.preventDefault();
-    // Создаем объект, имитирующий данные пользователя из Telegram
-    const fakeUser = {
-      telegramId: manualAuth.telegramId,
-      name: manualAuth.name,
-    };
-    onTelegramAuth(fakeUser);
-  };
+	// Регистрируем функцию в глобальной области для вызова из виджета Telegram
+	useEffect(() => {
+		window.onTelegramAuth = onTelegramAuth;
 
-  // Эффект для подключения виджета Telegram, если не localhost
-  useEffect(() => {
-    if (!isLocalhost) {
-      // Регистрируем функцию в глобальной области для вызова из виджета Telegram
-      window.onTelegramAuth = onTelegramAuth;
+		// Создаем и вставляем скрипт Telegram виджета
+		const script = document.createElement("script");
+		script.src = "https://telegram.org/js/telegram-widget.js?22";
+		script.async = true;
+		script.setAttribute("data-telegram-login", "lorythebimsbot");
+		script.setAttribute("data-size", "large");
+		script.setAttribute("data-onauth", "onTelegramAuth(user)");
+		// Опционально, можно добавить еще атрибуты, например, data-userpic или data-request-access
 
-      // Создаем и вставляем скрипт Telegram виджета
-      const script = document.createElement("script");
-      script.src = "https://telegram.org/js/telegram-widget.js?22";
-      script.async = true;
-      script.setAttribute("data-telegram-login", "lorythebimsbot");
-      script.setAttribute("data-size", "large");
-      script.setAttribute("data-onauth", "onTelegramAuth(user)");
-      // Добавляем дополнительные атрибуты при необходимости
+		if (telegramButtonRef.current) {
+			telegramButtonRef.current.appendChild(script);
+		}
+	}, []);
 
-      if (telegramButtonRef.current) {
-        telegramButtonRef.current.appendChild(script);
-      }
-    }
-  }, [isLocalhost]);
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md flex flex-col items-center">
-        <h2 className="text-2xl font-bold mb-6 text-center">
-          Вход через Telegram
-        </h2>
-        {isLocalhost ? (
-          // Форма для ручного ввода, если мы на localhost
-          <form onSubmit={handleManualSubmit} className="w-full flex flex-col gap-4">
-            <input
-              type="text"
-              placeholder="Telegram ID"
-              value={manualAuth.telegramId}
-              onChange={(e) =>
-                setManualAuth({ ...manualAuth, telegramId: e.target.value })
-              }
-              className="border p-2 rounded"
-              required
-            />
-            <input
-              type="text"
-              placeholder="Имя пользователя"
-              value={manualAuth.name}
-              onChange={(e) =>
-                setManualAuth({ ...manualAuth, name: e.target.value })
-              }
-              className="border p-2 rounded"
-              required
-            />
-            <button
-              type="submit"
-              className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-            >
-              Войти
-            </button>
-          </form>
-        ) : (
-          // Контейнер для виджета Telegram, если не localhost
-          <div id="telegram-button-container" ref={telegramButtonRef}></div>
-        )}
-      </div>
-    </div>
-  );
+	return (
+		<div className="min-h-screen flex items-center justify-center bg-gray-100">
+			<div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md flex flex-col items-center">
+				<h2 className="text-2xl font-bold mb-6 text-center">
+					Вход через Telegram
+				</h2>
+				{/* Контейнер для виджета Telegram */}
+				<div id="telegram-button-container" ref={telegramButtonRef}></div>
+			</div>
+		</div>
+	);
 };
 
 export default LoginUser;
