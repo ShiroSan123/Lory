@@ -32,18 +32,10 @@ const HomePage = () => {
         },
         body: JSON.stringify(payload),
       })
-        .then((res) => {
-			alert(userData.user.id + " " + userData.user.first_name)
-          if (!res.ok) {
-            throw new Error('Authorization failed');
-          }
-          return res.json();
-        })
         .then((data) => {
           // Сохраняем полученные токены в localStorage
           localStorage.setItem('accessToken', data.accessToken);
           localStorage.setItem('refreshToken', data.refreshToken);	
-		alert(data.accessToken)
           // Запрос дополнительных данных пользователя через эндпоинт auth/me,
           // используя полученный accessToken для авторизации запроса
           return fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
@@ -53,12 +45,6 @@ const HomePage = () => {
               'Authorization': `Bearer ${data.accessToken}`,
             },
           });
-        })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error('Fetching user info failed');
-          }
-          return res.json();
         })
         .then((userInfo) => {
           // Сохраняем данные пользователя, полученные через auth/me, в localStorage
