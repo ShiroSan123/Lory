@@ -93,9 +93,31 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 
 	const savedCompanies = JSON.parse(localStorage.getItem('companies')) || [];
 
+	const featureLabels = {
+		calendar: { label: 'Календарь', icon: menuItems.find(item => item.label === 'Календарь')?.icon },
+		analytics: { label: 'Аналитика', icon: menuItems.find(item => item.label === 'Аналитика')?.icon },
+		telegram: { label: 'Сотрудники', icon: menuItems.find(item => item.label === 'Сотрудники')?.icon },
+		aiText: { label: 'LoryAI', icon: menuItems.find(item => item.label === 'LoryAI')?.icon },
+		socials: { label: 'Клиенты', icon: menuItems.find(item => item.label === 'Клиенты')?.icon },
+		delivery: { label: 'Товары', icon: menuItems.find(item => item.label === 'Товары')?.icon },
+	};
+
+	const getTrueFeatures = (company) => {
+		const features = ['calendar', 'analytics', 'telegram', 'aiText', 'socials', 'delivery'];
+		return features
+			.filter((feature) => company[feature] === 'true')
+			.map((feature) => ({
+				key: feature,
+				label: featureLabels[feature].label,
+				icon: featureLabels[feature].icon,
+			}));
+	};
+
 	return (
-		<aside className={`fixed top-0 right-0 w-full md:w-64 h-[calc(100vh-136px)] bg-white rounded-bl-2xl p-4 z-20 overflow-y-auto transform transition-transform duration-300
-            ${isOpen ? 'translate-x-0' : 'translate-x-full'} md:translate-x-0 md:top-0`}>
+		<aside
+			className={`fixed top-0 right-0 w-full md:w-64 h-[calc(100vh-136px)] bg-white rounded-bl-2xl p-4 z-20 overflow-y-auto transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'
+				} md:translate-x-0 md:top-0`}
+		>
 			<a href="/">
 				<div className="flex items-center justify-between mb-6">
 					<div className="flex items-center">
@@ -108,41 +130,47 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 				</div>
 			</a>
 
-			<nav>
-				{menuItems.map((item) => (
-					<div key={item.label}>
-						<div
-							className="flex items-center p-2 gap-2 mb-2 rounded-lg hover:bg-gray-100 cursor-pointer"
-							onClick={() => {
-								toggleMenu(item.label);
-								onSelectMenu(item.label);
-							}}
-						>
-							<img src={item.icon} alt={item.label} className="w-5 h-5" />
-							<span>{item.label}</span>
-							<span className="ml-auto">
-								<img
-									src={expandedMenu === item.label ? arDown : arRight}
-									alt={expandedMenu === item.label ? 'Collapse' : 'Expand'}
-									className="w-4 h-4"
-								/>
-							</span>
-						</div>
-						{expandedMenu === 'Сотрудники' && item.label === 'Сотрудники' && (
-							<div className="pl-4">
-								{employees.map((employee) => (
-									<div
-										key={employee.id}
-										className="p-2 hover:bg-gray-200 rounded-lg cursor-pointer"
-										onClick={() => handleEmployeeSelect(employee)}
-									>
-										{employee.name}
-									</div>
-								))}
+			{savedCompanies.length > 0 && (
+				<div className="mb-6">
+					{savedCompanies.map((company) => (
+						<div key={company.id} className="mb-4">
+							<div className="flex items-center p-2 gap-2 rounded-lg bg-gray-50">
+								<span
+									className="font-medium hover:text-amber-700"
+									onClick={() => onSelectMenu('Business', { companyId: company.id })}
+								>
+									{company.name}
+								</span>
 							</div>
-						)}
-					</div>
-				))}
+							{getTrueFeatures(company).length > 0 ? (
+								getTrueFeatures(company).map((feature) => (
+									<div
+										key={feature.key}
+										className="flex items-center p-2 gap-2 mt-2 rounded-lg hover:bg-gray-100 cursor-pointer"
+										onClick={() => onSelectMenu(feature.label)}
+									>
+										{feature.icon ? (
+											<img src={feature.icon} alt={feature.label} className="w-5 h-5" />
+										) : (
+											<span className="w-5 h-5 bg-gray-200 rounded-full" />
+										)}
+										<span>{feature.label}</span>
+									</div>
+								))
+							) : (
+								<button
+									className="mt-2 p-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
+									onClick={() => onSelectMenu('Business', { companyId: company.id })}
+								>
+									Добавить функции
+								</button>
+							)}
+						</div>
+					))}
+				</div>
+			)}
+
+			<nav>
 				<a href="/BusinessRegPage">Зарегистрировать бизнес</a>
 			</nav>
 
@@ -238,24 +266,17 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 													'Не указано'
 												)}
 											</p>
-											<p className="text-sm text-gray-700 mt-1">
-												<strong>Календарь:</strong> {company.calendar ? 'Да' : 'Нет'}
-											</p>
-											<p className="text-sm text-gray-700 mt-1">
-												<strong>Аналитика:</strong> {company.analytics ? 'Да' : 'Нет'}
-											</p>
-											<p className="text-sm text-gray-700 mt-1">
-												<strong>Telegram:</strong> {company.telegram ? 'Да' : 'Нет'}
-											</p>
-											<p className="text-sm text-gray-700 mt-1">
-												<strong>Генерация ИИ:</strong> {company.aiText ? 'Да' : 'Нет'}
-											</p>
-											<p className="text-sm text-gray-700 mt-1">
-												<strong>Соцсети:</strong> {company.socials ? 'Да' : 'Нет'}
-											</p>
-											<p className="text-sm text-gray-700 mt-1">
-												<strong>Доставка:</strong> {company.delivery ? 'Да' : 'Нет'}
-											</p>
+											{getTrueFeatures(company).length > 0 ? (
+												getTrueFeatures(company).map((feature) => (
+													<p key={feature.key} className="text-sm text-gray-700 mt-1">
+														<strong>{feature.label}:</strong> Да
+													</p>
+												))
+											) : (
+												<p className="text-sm text-gray-700 mt-1">
+													<strong>Дополнительные функции:</strong> Отсутствуют
+												</p>
+											)}
 											<div className="text-sm text-gray-700 mt-1">
 												<strong>Филиалы:</strong>
 												{company.branches && company.branches.length > 0 ? (
@@ -295,6 +316,24 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 						)}
 					</div>
 				)}
+			</div>
+
+			{/* Добавляем нижнюю часть меню (Агенты и Клиенты) */}
+			<div className="absolute bottom-0 left-0 w-full p-4">
+				<div
+					className="flex items-center p-2 gap-2 rounded-lg hover:bg-gray-100 cursor-pointer"
+					onClick={() => onSelectMenu('Агенты')}
+				>
+					<img src="/ico/user.svg" alt="Агенты" className="w-5 h-5" />
+					<span>Агенты</span>
+				</div>
+				<div
+					className="flex items-center p-2 gap-2 rounded-lg hover:bg-gray-100 cursor-pointer"
+					onClick={() => onSelectMenu('Клиенты')}
+				>
+					<img src="/ico/user-1.svg" alt="Клиенты" className="w-5 h-5" />
+					<span>Клиенты</span>
+				</div>
 			</div>
 		</aside>
 	);

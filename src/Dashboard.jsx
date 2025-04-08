@@ -2,6 +2,7 @@ import { useState } from 'react';
 import RightSidebar from './components/Layout/RightSideBar';
 import MainContent from './components/Layout/MainContent';
 import Header from './components/Layout/Header';
+import { useCallback } from 'react';
 import './App.css';
 
 const Dashboard = () => {
@@ -20,10 +21,16 @@ const Dashboard = () => {
 		{ icon: '/ico/shopping.svg', label: 'Товары' },
 	];
 
+	const setIsSidebarOpenCallback = useCallback((value) => {
+		setIsLeftSidebarOpen(value);
+	}, []);
+
 	// Обновляем функцию onSelectMenu для принятия сотрудника
 	const handleSelectMenu = (menu, employee = null) => {
+		console.log('Selected Menu in Dashboard:', menu);
 		setSelectedMenu(menu);
-		setSelectedEmployee(employee); // Устанавливаем выбранного сотрудника
+		setSelectedEmployee(employee);
+		setIsLeftSidebarOpen(true);
 	};
 
 	// Обработка начала касания
@@ -64,18 +71,19 @@ const Dashboard = () => {
 			<Header
 				onToggleLeftSidebar={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
 				selectedMenu={selectedMenu}
-				selectedEmployee={selectedEmployee} // Передаем выбранного сотрудника в Header
+				selectedEmployee={selectedEmployee}
 			/>
 			<RightSidebar
 				isOpen={!isLeftSidebarOpen}
 				onClose={() => setIsLeftSidebarOpen(true)}
 				menuItems={menuItems}
-				onSelectMenu={handleSelectMenu} // Передаем обновленную функцию
+				onSelectMenu={handleSelectMenu}
 			/>
 			<MainContent
 				selectedMenu={selectedMenu}
 				isSidebarOpen={isLeftSidebarOpen}
-				selectedEmployee={selectedEmployee} // Передаем выбранного сотрудника в MainContent
+				setIsSidebarOpen={setIsSidebarOpenCallback} // Используем useCallback
+				selectedEmployee={selectedEmployee}
 			/>
 		</div>
 	);
