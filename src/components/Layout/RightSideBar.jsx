@@ -36,7 +36,6 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 
 	const features = ['calendar', 'analytics', 'telegram', 'aiText', 'socials', 'delivery'];
 
-	// Remove filtering based on 'true' values; always return all features
 	const getAllFeatures = () => {
 		return features.map((feature) => ({
 			key: feature,
@@ -65,6 +64,12 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 	const toggleEmployees = (companyId) => {
 		console.log('Toggling employees for company:', companyId, 'Current state:', expandedEmployees);
 		setExpandedEmployees(expandedEmployees === companyId ? null : companyId);
+	};
+
+	const handleCompanyClick = (companyId) => {
+		// Call onSelectMenu with 'Business' and pass the companyId as part of the employee object
+		onSelectMenu('Business', { companyId });
+		toggleCompany(companyId); // Optionally keep the toggle functionality
 	};
 
 	useEffect(() => {
@@ -136,14 +141,16 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 			<div className="flex-1 overflow-y-auto p-4">
 				{isLoading ? (
 					<p className="text-gray-600">Загрузка компаний...</p>
+				) : error ? (
+					<p className="text-red-600 mb-4">{error}</p>
 				) : companies.length === 0 ? (
-					<a className='' href='/BusinessRegPage'>Зарегестрировать в бизнес</a>
+					<p className="text-gray-600">Компании не найдены.</p>
 				) : (
 					companies.map((company) => (
 						<div key={company.id} className="mb-4">
 							<button
 								className="flex items-center p-2 gap-2 rounded-lg hover:bg-gray-100 cursor-pointer w-full text-left"
-								onClick={() => toggleCompany(company.id)}
+								onClick={() => handleCompanyClick(company.id)} // Update to trigger onSelectMenu
 								aria-expanded={expandedCompany === company.id}
 								aria-controls={`company-menu-${company.id}`}
 							>
@@ -175,7 +182,7 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 													onClick={() => {
 														if (feature.label === 'Сотрудники') {
 															toggleEmployees(company.id);
-															onSelectMenu(feature.label)
+															onSelectMenu(feature.label);
 														} else {
 															onSelectMenu(feature.label);
 														}
@@ -215,7 +222,7 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 					))
 				)}
 
-				{/* <div className="mt-6 mb-6">
+				<div className="mt-6 mb-6">
 					<button
 						className="flex items-center p-2 gap-2 rounded-lg hover:bg-gray-100 cursor-pointer w-full text-left"
 						onClick={toggleNotifications}
@@ -248,18 +255,14 @@ function RightSidebar({ isOpen, onClose, menuItems, onSelectMenu }) {
 							)}
 						</div>
 					)}
-				</div> */}
+				</div>
 			</div>
 
 			<div className="p-4 border-t border-gray-200 shrink-0">
 				<div className="flex items-center gap-3">
-					<img
-						src={localStorage.getItem("photo")}
-						alt="User Profile"
-						className="w-10 h-10 rounded-full"
-					/>
+					<img src="/ico/user-profile.svg" alt="User Profile" className="w-10 h-10 rounded-full" />
 					<div>
-						<p className="text-sm font-medium text-gray-800">{localStorage.getItem("name")}</p>
+						<p className="text-sm font-medium text-gray-800">Grigo_Ayaal</p>
 						<p className="text-xs text-gray-500">Администратор</p>
 					</div>
 				</div>

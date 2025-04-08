@@ -45,6 +45,19 @@ export const MainContent = memo(({
 	const [companies, setCompanies] = useState([]);
 	const [services, setServices] = useState({});
 
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [selectedCompanyId, setSelectedCompanyId] = useState(null);
+
+	const openModalForService = (companyId) => {
+		setSelectedCompanyId(companyId);
+		setIsModalOpen(true);
+	};
+
+	const closeModal = () => {
+		setIsModalOpen(false);
+		setSelectedCompanyId(null);
+	};
+
 	const steps = ['name', 'description', 'type', 'theme'];
 
 	const stepQuestions = {
@@ -87,18 +100,61 @@ export const MainContent = memo(({
 		}
 	}, [token, baseUrl]);
 
-	// Функция для получения услуг компании
+	// Функция для добавления новой услуги
+	// Функция для добавления новой услуги
+	const addService = useCallback(async (businessId, serviceData) => {
+		// Формируем объект новой услуги в соответствии с ожидаемой структурой API
+		const newService = {
+			moduleType: "MENU",
+			customParameters: {
+				displayType: "list",
+				categories: ["Entrées"], // Можно сделать динамическим в будущем
+				items: [{
+					name: serviceData.name,
+					description: serviceData.description,
+					price: serviceData.price,
+				}],
+			},
+		};
+
+		try {
+			// Отправляем запрос на добавление услуги
+			const response = await axios.post(
+				`${baseUrl}/services/${businessId}`,
+				newService,
+				{ headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+			);
+
+			// После успешного добавления обновляем список услуг
+			setServices(prev => ({
+				...prev,
+				[businessId]: [
+					...(prev[businessId] || []), // Сохраняем существующие услуги
+					newService.customParameters.items[0], // Добавляем новую услугу
+				],
+			}));
+
+			closeModal(); // Закрываем модальное окно
+		} catch (err) {
+			setError(err.response?.data?.message || 'Ошибка при добавлении услуги.');
+			console.error('[addService] Error:', err.response?.data || err.message);
+		}
+	}, [token, baseUrl]);
+
+	// Функция для получения услуг компании (оставим для проверки)
 	const fetchServices = useCallback(async (businessId) => {
 		try {
 			const response = await axios.get(
 				`${baseUrl}/services/${businessId}`,
 				{ headers: { Authorization: `Bearer ${token}` } }
 			);
-			// Логируем ответ для отладки
 			console.log(`[fetchServices] Response for businessId ${businessId}:`, response.data);
 
-			// Безопасно получаем items, с fallback на пустой массив
-			const items = response.data?.customParameters?.items || [];
+			// Извлекаем все элементы items из ответа
+			const items = response.data.flatMap(service =>
+				service.customParameters?.items || []
+			);
+
 			setServices(prev => ({
 				...prev,
 				[businessId]: items,
@@ -106,43 +162,12 @@ export const MainContent = memo(({
 		} catch (err) {
 			console.error(`[fetchServices] Error for businessId ${businessId}:`, err.response?.data || err.message);
 			setError(err.response?.data?.message || `Ошибка при получении услуг для компании ${businessId}.`);
-			// Устанавливаем пустой массив в случае ошибки
 			setServices(prev => ({
 				...prev,
 				[businessId]: [],
 			}));
 		}
 	}, [token, baseUrl]);
-
-	// Функция для добавления новой услуги
-	const addService = useCallback(async (businessId) => {
-		const newService = {
-			moduleType: "MENU",
-			customParameters: {
-				displayType: "list",
-				categories: ["Entrées"],
-				items: [
-					{
-						name: "Soupe à l'oignon",
-						description: "Традиционный французский луковый суп с сырной корочкой",
-						price: 8.5,
-					},
-				],
-			},
-		};
-
-		try {
-			await axios.post(
-				`${baseUrl}/services/${businessId}`,
-				newService,
-				{ headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
-			);
-			// Обновляем список услуг после добавления
-			await fetchServices(businessId); // Ждем завершения, чтобы данные обновились
-		} catch (err) {
-			setError(err.response?.data?.message || 'Ошибка при добавлении услуги.');
-		}
-	}, [token, baseUrl, fetchServices]);
 
 	// Загружаем компании при монтировании компонента
 	useEffect(() => {
@@ -568,7 +593,7 @@ export const MainContent = memo(({
 													className="bg-white rounded-2xl shadow-md overflow-hidden"
 												>
 													<img
-														src="/images/placeholder.jpg" // Замените на реальное изображение, если есть
+														src="/images/placeholder.jpg"
 														alt={service.name || 'Товар'}
 														className="w-full h-60 object-cover rounded-t-lg"
 													/>
@@ -590,7 +615,7 @@ export const MainContent = memo(({
 										)}
 									</div>
 									<button
-										onClick={() => addService(company.id)}
+										onClick={() => openModalForService(company.id)}
 										className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
 									>
 										Добавить
@@ -598,12 +623,89 @@ export const MainContent = memo(({
 								</div>
 							))
 						)}
+
+						{/* Modal for adding a new service */}
+						{isModalOpen && (
+							<div className="fixed inset-0 z-50 flex items-center justify-center">
+								{/* Darkened Background Overlay */}
+								<div
+									className="absolute inset-0 bg-black opacity-25"
+									onClick={closeModal}
+								></div>
+
+								{/* Modal Content */}
+								<div className="relative bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+									<h2 className="text-xl font-bold mb-4">Добавить новый товар</h2>
+									<form
+										onSubmit={(e) => {
+											e.preventDefault();
+											const formData = new FormData(e.target);
+											const newService = {
+												name: formData.get('name'),
+												description: formData.get('description'),
+												price: parseFloat(formData.get('price')),
+											};
+											addService(selectedCompanyId, newService);
+										}}
+									>
+										<div className="mb-4">
+											<label className="block text-sm font-medium text-gray-700">Название</label>
+											<input
+												type="text"
+												name="name"
+												defaultValue=""
+												className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+												required
+											/>
+										</div>
+										<div className="mb-4">
+											<label className="block text-sm font-medium text-gray-700">Описание</label>
+											<textarea
+												name="description"
+												defaultValue=""
+												className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+												rows="3"
+												required
+											/>
+										</div>
+										<div className="mb-4">
+											<label className="block text-sm font-medium text-gray-700">Цена (₽)</label>
+											<input
+												type="number"
+												name="price"
+												defaultValue=""
+												step="0.01"
+												className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+												required
+											/>
+										</div>
+										<div className="flex justify-end space-x-2">
+											<button
+												type="button"
+												onClick={closeModal}
+												className="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600"
+											>
+												Отмена
+											</button>
+											<button
+												type="submit"
+												className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
+											>
+												Добавить
+											</button>
+										</div>
+									</form>
+								</div>
+							</div>
+						)}
 					</div>
 				);
 			case 'Business':
 				const savedCompanies = JSON.parse(localStorage.getItem('companies')) || [];
 				const companyId = selectedEmployee?.companyId;
-				const company = savedCompanies.find((c) => c.id === companyId);
+				// Fallback to JSON data if no companyId or no match in localStorage
+				const companyFromJson = businesses.find(b => b.id === companyId) || businesses[0]; // Default to first company if no match
+				const company = savedCompanies.find(c => c.id === companyId) || companyFromJson;
 
 				if (!company) {
 					return <div className="p-4">Компания не найдена</div>;
@@ -632,20 +734,7 @@ export const MainContent = memo(({
 									<input
 										type="text"
 										value={companyData?.name || ''}
-										onChange={(e) =>
-											setCompanyData({ ...companyData, name: e.target.value })
-										}
-										className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-									/>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-gray-700">Сфера</label>
-									<input
-										type="text"
-										value={companyData?.businessType || ''}
-										onChange={(e) =>
-											setCompanyData({ ...companyData, businessType: e.target.value })
-										}
+										onChange={(e) => setCompanyData({ ...companyData, name: e.target.value })}
 										className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
 									/>
 								</div>
@@ -653,143 +742,27 @@ export const MainContent = memo(({
 									<label className="block text-sm font-medium text-gray-700">Описание</label>
 									<textarea
 										value={companyData?.description || ''}
-										onChange={(e) =>
-											setCompanyData({ ...companyData, description: e.target.value })
-										}
+										onChange={(e) => setCompanyData({ ...companyData, description: e.target.value })}
 										className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
 										rows="3"
 									/>
 								</div>
 								<div>
-									<label className="block text-sm font-medium text-gray-700">Город</label>
+									<label className="block text-sm font-medium text-gray-700">Тип бизнеса</label>
 									<input
 										type="text"
-										value={companyData?.city || ''}
-										onChange={(e) =>
-											setCompanyData({ ...companyData, city: e.target.value })
-										}
+										value={companyData?.type || ''}
+										onChange={(e) => setCompanyData({ ...companyData, type: e.target.value })}
 										className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
 									/>
 								</div>
 								<div>
-									<label className="block text-sm font-medium text-gray-700">Улица</label>
+									<label className="block text-sm font-medium text-gray-700">Цветовая тема</label>
 									<input
 										type="text"
-										value={companyData?.street || ''}
-										onChange={(e) =>
-											setCompanyData({ ...companyData, street: e.target.value })
-										}
+										value={companyData?.theme?.color || ''}
+										onChange={(e) => setCompanyData({ ...companyData, theme: { color: e.target.value } })}
 										className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-									/>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-gray-700">Режим работы</label>
-									<input
-										type="text"
-										value={companyData?.workTime || ''}
-										onChange={(e) =>
-											setCompanyData({ ...companyData, workTime: e.target.value })
-										}
-										className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-									/>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-gray-700">Выходные</label>
-									<input
-										type="text"
-										value={companyData?.holidays || ''}
-										onChange={(e) =>
-											setCompanyData({ ...companyData, holidays: e.target.value })
-										}
-										className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-									/>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-gray-700">Описание от ИИ</label>
-									<textarea
-										value={companyData?.descriptionAI || ''}
-										onChange={(e) =>
-											setCompanyData({ ...companyData, descriptionAI: e.target.value })
-										}
-										className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-										rows="3"
-									/>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-gray-700">Логотип (URL)</label>
-									<input
-										type="text"
-										value={companyData?.logo || ''}
-										onChange={(e) =>
-											setCompanyData({ ...companyData, logo: e.target.value })
-										}
-										className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-									/>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-gray-700">Календарь</label>
-									<input
-										type="checkbox"
-										checked={companyData?.calendar === 'true'}
-										onChange={(e) =>
-											setCompanyData({ ...companyData, calendar: e.target.checked ? 'true' : 'false' })
-										}
-										className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded"
-									/>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-gray-700">Аналитика</label>
-									<input
-										type="checkbox"
-										checked={companyData?.analytics === 'true'}
-										onChange={(e) =>
-											setCompanyData({ ...companyData, analytics: e.target.checked ? 'true' : 'false' })
-										}
-										className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded"
-									/>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-gray-700">Сотрудники</label>
-									<input
-										type="checkbox"
-										checked={companyData?.telegram === 'true'}
-										onChange={(e) =>
-											setCompanyData({ ...companyData, telegram: e.target.checked ? 'true' : 'false' })
-										}
-										className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded"
-									/>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-gray-700">LoryAI</label>
-									<input
-										type="checkbox"
-										checked={companyData?.aiText === 'true'}
-										onChange={(e) =>
-											setCompanyData({ ...companyData, aiText: e.target.checked ? 'true' : 'false' })
-										}
-										className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded"
-									/>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-gray-700">Клиенты</label>
-									<input
-										type="checkbox"
-										checked={companyData?.socials === 'true'}
-										onChange={(e) =>
-											setCompanyData({ ...companyData, socials: e.target.checked ? 'true' : 'false' })
-										}
-										className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded"
-									/>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-gray-700">Товары</label>
-									<input
-										type="checkbox"
-										checked={companyData?.delivery === 'true'}
-										onChange={(e) =>
-											setCompanyData({ ...companyData, delivery: e.target.checked ? 'true' : 'false' })
-										}
-										className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded"
 									/>
 								</div>
 								<div className="flex space-x-2">
@@ -816,86 +789,37 @@ export const MainContent = memo(({
 									<strong className="font-semibold">Название:</strong> {company.name || 'Не указано'}
 								</p>
 								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Сфера:</strong> {company.businessType || 'Не указано'}
-								</p>
-								<p className="text-base text-gray-800 mb-3">
 									<strong className="font-semibold">Описание:</strong> {company.description || 'Не указано'}
 								</p>
 								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Город:</strong> {company.city || 'Не указано'}
+									<strong className="font-semibold">Тип бизнеса:</strong> {company.type || 'Не указано'}
 								</p>
 								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Улица:</strong> {company.street || 'Не указано'}
+									<strong className="font-semibold">Цветовая тема:</strong> {company.theme?.color || 'Не указано'}
 								</p>
 								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Режим работы:</strong> {company.workTime || 'Не указано'}
-								</p>
-								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Выходные:</strong> {company.holidays || 'Не указано'}
-								</p>
-								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Описание от ИИ:</strong> {company.descriptionAI || 'Не указано'}
-								</p>
-								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Логотип:</strong>{' '}
-									{company.logo ? (
-										<a href={company.logo} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-											Ссылка
-										</a>
-									) : (
-										'Не указано'
-									)}
-								</p>
-								<p className={`text-base mb-3 ${company.calendar === 'true' ? 'text-green-600' : 'text-gray-800'}`}>
-									<strong className="font-semibold">Календарь:</strong> {company.calendar === 'true' ? 'Да' : 'Нет'}
-								</p>
-								<p className={`text-base mb-3 ${company.analytics === 'true' ? 'text-green-600' : 'text-gray-800'}`}>
-									<strong className="font-semibold">Аналитика:</strong> {company.analytics === 'true' ? 'Да' : 'Нет'}
-								</p>
-								<p className={`text-base mb-3 ${company.telegram === 'true' ? 'text-green-600' : 'text-gray-800'}`}>
-									<strong className="font-semibold">Сотрудники:</strong> {company.telegram === 'true' ? 'Да' : 'Нет'}
-								</p>
-								<p className={`text-base mb-3 ${company.aiText === 'true' ? 'text-green-600' : 'text-gray-800'}`}>
-									<strong className="font-semibold">LoryAI:</strong> {company.aiText === 'true' ? 'Да' : 'Нет'}
-								</p>
-								<p className={`text-base mb-3 ${company.socials === 'true' ? 'text-green-600' : 'text-gray-800'}`}>
-									<strong className="font-semibold">Клиенты:</strong> {company.socials === 'true' ? 'Да' : 'Нет'}
-								</p>
-								<p className={`text-base mb-3 ${company.delivery === 'true' ? 'text-green-600' : 'text-gray-800'}`}>
-									<strong className="font-semibold">Товары:</strong> {company.delivery === 'true' ? 'Да' : 'Нет'}
-								</p>
-								<div className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Филиалы:</strong>
-									{company.branches && company.branches.length > 0 ? (
+									<strong className="font-semibold">Режим работы:</strong>
+									{company.workingHours && company.workingHours.length > 0 ? (
 										<ul className="list-disc pl-4 mt-1">
-											{company.branches.map((branch, index) => (
-												<li key={index}>
-													{typeof branch === 'object' && branch !== null
-														? branch.name || JSON.stringify(branch)
-														: branch || 'Не указано'}
-												</li>
+											{company.workingHours.map((hours, index) => (
+												<li key={index}>{`${hours.day}: ${hours.start} - ${hours.end}`}</li>
 											))}
 										</ul>
 									) : (
 										' Не указано'
 									)}
-								</div>
-								<div className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Сотрудники:</strong>
-									{company.members && company.members.length > 0 ? (
-										<ul className="list-disc pl-4 mt-1">
-											{company.members.map((member, index) => (
-												<li key={index}>
-													{typeof member === 'object' && member !== null
-														? member.role || JSON.stringify(member)
-														: member || 'Не указано'}
-												</li>
-											))}
-										</ul>
-									) : (
-										' Не указано'
-									)}
-								</div>
+								</p>
+								<p className="text-base text-gray-800 mb-3">
+									<strong className="font-semibold">Владелец (ID):</strong> {company.ownerId || 'Не указано'}
+								</p>
+								<p className="text-base text-gray-800 mb-3">
+									<strong className="font-semibold">Дата создания:</strong>{' '}
+									{company.createdAt ? new Date(company.createdAt).toLocaleString() : 'Не указано'}
+								</p>
+								<p className="text-base text-gray-800 mb-3">
+									<strong className="font-semibold">Дата обновления:</strong>{' '}
+									{company.updatedAt ? new Date(company.updatedAt).toLocaleString() : 'Не указано'}
+								</p>
 								<button
 									onClick={() => setIsEditing(true)}
 									className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
