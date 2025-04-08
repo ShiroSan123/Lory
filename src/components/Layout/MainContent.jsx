@@ -1,130 +1,157 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import ChatBot from '../../components/chatBot';
 import { useNavigate } from 'react-router-dom';
 import { memo } from 'react';
 
-export const MainContent = memo(({ selectedMenu, isLoading = false, isSidebarOpen, setIsSidebarOpen, selectedEmployee }) => {
+export const MainContent = memo(({
+	selectedMenu,
+	isLoading = false,
+	isSidebarOpen,
+	setIsSidebarOpen,
+	selectedEmployee
+}) => {
 	const mainRef = useRef(null);
 	const navigate = useNavigate();
-	const [isSwiped, setIsSwiped] = useState(false); // Новое состояние для свайпа
+	const [isSwiped, setIsSwiped] = useState(false);
 
+	// Company states
 	const [companyData, setCompanyData] = useState(null);
 	const [updateError, setUpdateError] = useState('');
 	const [updateSuccess, setUpdateSuccess] = useState('');
 	const [isEditing, setIsEditing] = useState(false);
 
-	// Состояние для регистрации бизнеса
-	const [formData, setFormData] = useState({
+	// Registration states
+	const initialFormData = {
 		name: '',
-		businessType: 'RESTAURANT',
-		businessTerm: '',
-		city: '',
-		street: '',
-		workTime: '',
-		holidays: '',
 		description: '',
 		descriptionAI: '',
-		logo: null,
-		calendar: false,
-		analytics: false,
-		telegram: false,
-		aiText: false,
-		socials: false,
-		delivery: false,
-	});
+		type: '',
+		theme: { color: '' },
+	};
+
+	const [formData, setFormData] = useState(initialFormData);
 	const [step, setStep] = useState(1);
 	const [isRegistering, setIsRegistering] = useState(false);
 	const [localLoading, setLocalLoading] = useState(false);
 	const [responseMessage, setResponseMessage] = useState('');
 	const [error, setError] = useState('');
-	const [showDescriptionButtons, setShowDescriptionButtons] = useState(false);
-	const [isReenteringDescription, setIsReenteringDescription] = useState(false);
+	const [showButtons, setShowButtons] = useState(false);
+	const [buttonOptions, setButtonOptions] = useState([]);
+	const [businesses, setBusinesses] = useState([]);
+	const [isChoosingDescription, setIsChoosingDescription] = useState(false);
 
-	const handleSwipeRight = () => {
-		setIsSwiped(true); // Устанавливаем состояние свайпа вправо
-	};
-
-	const handleSwipeToggle = () => {
-		setIsSwiped((prev) => !prev); // Переключение состояния
-	};
-
-	const handleTouchStart = (e) => {
-		const touch = e.touches[0];
-		mainRef.current.startX = touch.clientX;
-	};
-
-	const handleTouchMove = (e) => {
-		const touch = e.touches[0];
-		const deltaX = touch.clientX - mainRef.current.startX;
-		if (deltaX > 50) setIsSwiped(true); // Свайп вправо при движении на 50px
-	};
-
-	const steps = [
-		'name', 'businessTerm', 'city', 'street', 'workTime', 'holidays',
-		'description', 'descriptionAI', 'logo', 'calendar', 'analytics',
-		'telegram', 'aiText', 'socials', 'delivery',
-	];
+	const steps = ['name', 'description', 'type', 'theme'];
 
 	const stepQuestions = {
 		name: 'Как называется твой бизнес? (обязательное поле)',
-		businessTerm: 'Какой тег подходит твоему бизнесу? Выбери: "Краткосрочный" или "Долгосрочный" (обязательное поле)',
-		city: 'В каком городе находится твой бизнес?',
-		street: 'Укажи улицу и номер дома.',
-		workTime: 'Какой у тебя режим работы? (например, "Пн-Пт 9:00-18:00")',
-		holidays: 'Какие у тебя выходные? Выбери: "Суббота" или "Воскресенье"',
 		description: 'Расскажи немного о своем бизнесе.',
-		descriptionAI: 'Хочешь, чтобы я сгенерировал описание для твоего бизнеса? Напиши "да" или "нет".',
-		logo: 'Пришли файл логотипа или напиши "нет", если его пока нет.',
-		calendar: 'Нужен ли календарь бронирования? (да/нет)',
-		analytics: 'Хочешь включить аналитику? (да/нет)',
-		telegram: 'Подключить сотрудников через Telegram? (да/нет)',
-		aiText: 'Использовать генерацию текста ИИ? (да/нет)',
-		socials: 'Подключить клиентов через соцсети? (да/нет)',
-		delivery: 'Нужна ли доставка? (да/нет)',
+		type: 'Выбери тип бизнеса:',
+		theme: 'Выбери цветовую тему для бизнеса:',
 	};
 
-	const validationRules = {
-		businessTerm: ['Краткосрочный', 'Долгосрочный'],
-		holidays: ['Суббота', 'Воскресенье'],
+	const buttonOptionsMap = {
+		type: [
+			{ label: 'Услуги', value: 'SERVICE' },
+			{ label: 'Ресторан', value: 'RESTAURANT' },
+			{ label: 'Недвижимость', value: 'REAL_ESTATE' },
+		],
+		theme: [
+			{ label: 'Синий', value: 'blue' },
+			{ label: 'Зеленый', value: 'green' },
+			{ label: 'Красный', value: 'red' },
+		],
+		chooseDescription: [
+			{ label: 'Использовать мое описание', value: 'user' },
+			{ label: 'Использовать описание ИИ', value: 'ai' },
+		],
 	};
 
-	const products = [
-		{
-			id: 1,
-			image: '/images/cherry.jpeg',
-			title: 'Зимняя вишня',
-			description: 'Стрижка женская, Яркий акцент на челке, стильный рисунок сзади.',
-			price: 650,
-		},
-		{
-			id: 2,
-			image: '/images/crop.jpeg',
-			title: 'Кроп',
-			description: 'Стрижка мужская. стильная. подойдет для многих мужчин',
-			price: 650,
-		},
-		{
-			id: 3,
-			image: '/images/mallet.jpeg',
-			title: 'Маллет',
-			description: 'Стрижка мужская. самая крутая. подойдет для всех',
-			price: 650,
-		},
-	];
+	const token = localStorage.getItem('token');
 
-	const handleChatSubmit = async (userInput, addMessage) => {
+	const generateDescriptionAI = useCallback(async (addMessage) => {
+		setLocalLoading(true);
+		setResponseMessage('');
+		setError('');
+
+		const data = {
+			company_name: formData.name,
+			industry: formData.type,
+			description: formData.description,
+		};
+
+		try {
+			const response = await axios.post(
+				'https://my-vercel-server-seven.vercel.app/api/generate_description',
+				data,
+				{
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer a8f3cd34d3ad67e1f4b3f1a8d3cc432f9b2f9c9ac4d84c79e0d40a8c9ef0c8dd`,
+					},
+				}
+			);
+
+			const { text } = response.data;
+			setFormData(prev => ({ ...prev, descriptionAI: text }));
+			setResponseMessage('Описание успешно сгенерировано!');
+			localStorage.setItem('descBusiness', text);
+
+			addMessage({ sender: 'bot', text: 'Вот сгенерированное описание:' });
+			addMessage({ sender: 'bot', text });
+			addMessage({ sender: 'bot', text: 'Какое описание ты хочешь использовать?' });
+			setShowButtons(true);
+			setButtonOptions(buttonOptionsMap.chooseDescription);
+			setIsChoosingDescription(true);
+		} catch (err) {
+			const errorMessage = err.response?.data?.message || 'Не удалось сгенерировать описание.';
+			setError(errorMessage);
+			addMessage({ sender: 'bot', text: errorMessage });
+		} finally {
+			setLocalLoading(false);
+		}
+	}, [formData]);
+
+	const validateInput = useCallback((field, input) => {
+		if (field === 'name' && !input) {
+			setError('Название бизнеса обязательно.');
+			return false;
+		}
+		setError('');
+		return true;
+	}, []);
+
+	const updateFormData = useCallback((field, value) => {
+		setFormData(prev => ({
+			...prev,
+			[field === 'theme' ? 'theme' : field]: field === 'theme' ? { color: value } : value
+		}));
+	}, []);
+
+	const proceedToNextStep = useCallback((addMessage) => {
+		setShowButtons(false);
+		setButtonOptions([]);
+
+		if (step < steps.length) {
+			setStep(prev => prev + 1);
+			addMessage({ sender: 'bot', text: stepQuestions[steps[step]] });
+			if (buttonOptionsMap[steps[step]]) {
+				setShowButtons(true);
+				setButtonOptions(buttonOptionsMap[steps[step]]);
+			}
+		} else {
+			displayFormData(addMessage);
+			handleSubmit(addMessage);
+		}
+	}, [step, steps, buttonOptionsMap, stepQuestions]);
+
+	const handleChatSubmit = useCallback(async (userInput, addMessage) => {
 		const currentField = steps[step - 1];
 		const trimmedInput = userInput.trim();
 
-		if (isReenteringDescription) {
-			if (trimmedInput.toLowerCase() === 'да') {
-				await generateDescriptionAI(addMessage);
-			} else {
-				setFormData((prev) => ({ ...prev, description: trimmedInput }));
-				await generateDescriptionAI(addMessage);
-			}
-			setIsReenteringDescription(false);
+		if (buttonOptionsMap[currentField] && !isChoosingDescription) {
+			setShowButtons(true);
+			setButtonOptions(buttonOptionsMap[currentField]);
 			return;
 		}
 
@@ -132,51 +159,27 @@ export const MainContent = memo(({ selectedMenu, isLoading = false, isSidebarOpe
 
 		updateFormData(currentField, trimmedInput);
 
-		if (currentField === 'descriptionAI' && trimmedInput.toLowerCase() === 'да') {
+		if (currentField === 'description') {
 			await generateDescriptionAI(addMessage);
 			return;
 		}
 
-		proceedToNextStepOrSubmit(addMessage);
-	};
+		proceedToNextStep(addMessage);
+	}, [step, steps, buttonOptionsMap, isChoosingDescription, validateInput, updateFormData, generateDescriptionAI]);
 
-	const validateInput = (field, input) => {
-		if (field === 'name' && !input) {
-			setError('Название бизнеса обязательно.');
-			return false;
-		}
-		if (validationRules[field] && !validationRules[field].includes(input)) {
-			setError(`Выбери одну из опций: "${validationRules[field].join('" или "')}".`);
-			return false;
-		}
-		setError('');
-		return true;
-	};
+	const displayFormData = useCallback((addMessage) => {
+		addMessage({ sender: 'bot', text: 'Вот данные, которые ты ввел:' });
+		addMessage({
+			sender: 'bot',
+			text: `Название: ${formData.name}\nОписание: ${formData.description}\nТип бизнеса: ${formData.type}\nЦветовая тема: ${formData.theme.color}`,
+		});
+	}, [formData]);
 
-	const updateFormData = (field, value) => {
-		const booleanFields = ['calendar', 'analytics', 'telegram', 'aiText', 'socials', 'delivery'];
-		setFormData((prev) => ({
-			...prev,
-			[field]: booleanFields.includes(field) ? value.toLowerCase() === 'да' : value,
-			...(field === 'logo' && { logo: value === 'нет' ? null : value }),
-		}));
-	};
-
-	const proceedToNextStepOrSubmit = (addMessage) => {
-		if (step < steps.length) {
-			setStep((prev) => prev + 1);
-			addMessage({ sender: 'bot', text: stepQuestions[steps[step]] });
-		} else {
-			handleSubmit(addMessage);
-		}
-	};
-
-	const handleSubmit = async (addMessage) => {
+	const handleSubmit = useCallback(async (addMessage) => {
 		setIsRegistering(true);
 		setResponseMessage('');
 		setError('');
 
-		const token = localStorage.getItem('token');
 		if (!token) {
 			setError('Требуется авторизация. Пожалуйста, войдите.');
 			addMessage({ sender: 'bot', text: 'Требуется авторизация. Пожалуйста, войдите.' });
@@ -184,152 +187,132 @@ export const MainContent = memo(({ selectedMenu, isLoading = false, isSidebarOpe
 			return;
 		}
 
-		const formPayload = createFormPayload();
+		const formPayload = {
+			name: formData.name,
+			description: formData.description,
+			type: formData.type,
+			theme: formData.theme,
+		};
+
 		try {
 			const response = await axios.post(
-				`${import.meta.env.VITE_API_BASE_URL}/companies`,
+				`${import.meta.env.VITE_API_BASE_URL}/business`,
 				formPayload,
-				{ headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
+				{ headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
 			);
 			addMessage({ sender: 'bot', text: 'Бизнес успешно зарегистрирован!' });
 			setResponseMessage('Бизнес успешно зарегистрирован!');
+			await fetchBusinesses(addMessage);
 			setTimeout(() => navigate('/Dashboard'), 2000);
 		} catch (err) {
-			setError(err.response?.data?.message || 'Ошибка при регистрации.');
-			addMessage({ sender: 'bot', text: err.response?.data?.message || 'Ошибка при регистрации.' });
+			const errorMessage = err.response?.data?.message || 'Ошибка при регистрации.';
+			setError(errorMessage);
+			addMessage({ sender: 'bot', text: errorMessage });
 		} finally {
 			setIsRegistering(false);
 		}
-	};
+	}, [formData, token, navigate]);
 
-	const createFormPayload = () => {
-		const data = new FormData();
-		Object.entries(formData).forEach(([key, value]) => {
-			data.append(key, typeof value === 'boolean' ? value.toString() : value || '');
-		});
-		return data;
-	};
-
-	const generateDescriptionAI = async (addMessage) => {
-		setLocalLoading(true);
+	const fetchBusinesses = useCallback(async (addMessage) => {
 		try {
-			const response = await axios.post(
-				'https://my-vercel-server-seven.vercel.app/api/generate_description',
-				{ company_name: formData.name, industry: formData.businessType, description: formData.description },
-				{ headers: { 'Content-Type': 'application/json', Authorization: `Bearer a8f3cd34d3ad67e1f4b3f1a8d3cc432f9b2f9c9ac4d84c79e0d40a8c9ef0c8dd` } }
+			const response = await axios.get(
+				`${import.meta.env.VITE_API_BASE_URL}/business/admin`,
+				{ headers: { Authorization: `Bearer ${token}` } }
 			);
-			const generatedText = response.data.text;
-			setFormData((prev) => ({ ...prev, descriptionAI: generatedText }));
-			addMessage({ sender: 'bot', text: 'Вот что я сгенерировал для твоего бизнеса:' });
-			addMessage({ sender: 'bot', text: generatedText });
-			addMessage({ sender: 'bot', text: 'Оставить это описание или поменять? Напиши "оставить" или "поменять".' });
-			setShowDescriptionButtons(true);
-			localStorage.setItem('descBusiness', generatedText);
+			setBusinesses(response.data);
+			addMessage({ sender: 'bot', text: 'Вот список твоих компаний:' });
+			response.data.forEach(business => {
+				addMessage({
+					sender: 'bot',
+					text: `Название: ${business.name}, Тип: ${business.type}, Описание: ${business.description}, Тема: ${business.theme.color}`,
+				});
+			});
 		} catch (err) {
-			setError(err.response?.data?.message || 'Ошибка генерации описания.');
-			addMessage({ sender: 'bot', text: err.response?.data?.message || 'Ошибка генерации описания.' });
-		} finally {
-			setLocalLoading(false);
+			const errorMessage = err.response?.data?.message || 'Ошибка при получении данных о компаниях.';
+			setError(errorMessage);
+			addMessage({ sender: 'bot', text: errorMessage });
 		}
-	};
+	}, [token]);
 
-	const handleDescriptionChoice = (choice, addMessage) => {
-		if (choice === 'оставить') {
-			setShowDescriptionButtons(false);
-			setStep((prev) => prev + 1);
-			addMessage({ sender: 'bot', text: stepQuestions[steps[step]] });
-		} else if (choice === 'поменять') {
-			setFormData((prev) => ({ ...prev, descriptionAI: '' }));
-			setShowDescriptionButtons(false);
-			setIsReenteringDescription(true);
-			setStep((prev) => prev - 1);
-			addMessage({ sender: 'bot', text: 'Введи новое описание для генерации или напиши "да" для повторной генерации.' });
+	const handleButtonClick = useCallback((value, addMessage) => {
+		addMessage({ sender: 'user', text: value });
+
+		if (isChoosingDescription) {
+			if (value === 'user') {
+				addMessage({ sender: 'bot', text: 'Выбрано твое описание.' });
+			} else if (value === 'ai') {
+				setFormData(prev => ({ ...prev, description: prev.descriptionAI }));
+				addMessage({ sender: 'bot', text: 'Выбрано описание, сгенерированное ИИ.' });
+			}
+			setIsChoosingDescription(false);
+			proceedToNextStep(addMessage);
+		} else {
+			updateFormData(steps[step - 1], value);
+			proceedToNextStep(addMessage);
 		}
-	};
+	}, [isChoosingDescription, steps, step, updateFormData, proceedToNextStep]);
 
-	const getBotMessage = () => {
+	const getBotMessage = useCallback(() => {
 		if (isRegistering) return 'Регистрирую твой бизнес...';
+		if (localLoading) return 'Генерирую описание...';
 		if (responseMessage) return responseMessage;
 		if (error) return error;
-		if (isReenteringDescription) return 'Введи новое описание для генерации или напиши "да" для повторной генерации.';
-		if (showDescriptionButtons) return 'Оставить это описание или поменять? Напиши "оставить" или "поменять".';
+		if (isChoosingDescription) return 'Какое описание ты хочешь использовать?';
 		return stepQuestions[steps[step - 1]];
-	};
+	}, [isRegistering, localLoading, responseMessage, error, isChoosingDescription, step]);
 
-	const handleCustomInput = (input, addMessage) => {
-		if (showDescriptionButtons) {
-			handleDescriptionChoice(input.trim().toLowerCase(), addMessage);
-		} else {
-			handleChatSubmit(input, addMessage);
-		}
-	};
-
-	const startRegistration = () => {
+	const startRegistration = useCallback(() => {
 		setStep(1);
-		setFormData({
-			name: '',
-			businessType: 'RESTAURANT',
-			businessTerm: '',
-			city: '',
-			street: '',
-			workTime: '',
-			holidays: '',
-			description: '',
-			descriptionAI: '',
-			logo: null,
-			calendar: false,
-			analytics: false,
-			telegram: false,
-			aiText: false,
-			socials: false,
-			delivery: false,
-		});
+		setFormData(initialFormData);
 		setIsRegistering(false);
+		setLocalLoading(false);
 		setResponseMessage('');
 		setError('');
-		setShowDescriptionButtons(false);
-		setIsReenteringDescription(false);
-	};
+		setShowButtons(false);
+		setButtonOptions([]);
+		setIsChoosingDescription(false);
+	}, []);
 
-	const handleUpdateCompany = async (companyId) => {
+	const handleUpdateCompany = useCallback(async (companyId) => {
 		try {
 			const response = await axios.put(
 				`${import.meta.env.VITE_API_BASE_URL}/companies/${companyId}`,
 				companyData,
 				{
 					headers: {
-						'Authorization': `Bearer ${localStorage.getItem('token')}`,
+						'Authorization': `Bearer ${token}`,
 						'Content-Type': 'application/json',
 					},
 				}
 			);
 
 			const savedCompanies = JSON.parse(localStorage.getItem('companies')) || [];
-			const updatedCompanies = savedCompanies.map((company) =>
+			const updatedCompanies = savedCompanies.map(company =>
 				company.id === companyId ? { ...company, ...companyData } : company
 			);
 			localStorage.setItem('companies', JSON.stringify(updatedCompanies));
 
 			setUpdateSuccess('Данные компании успешно обновлены!');
 			setUpdateError('');
-			window.location.reload();
+			setTimeout(() => window.location.reload(), 1000);
 		} catch (err) {
-			console.error('Ошибка при обновлении компании:', err);
 			setUpdateError('Произошла ошибка при обновлении данных. Попробуйте снова.');
 			setUpdateSuccess('');
 		}
-	};
+	}, [companyData, token]);
 
+	// Рендеринг контента остается практически без изменений
 	const renderMainContent = () => {
-		console.log('Rendering MainContent with selectedMenu:', selectedMenu);
 		switch (selectedMenu) {
 			case 'LoryAI':
 				return (
 					<ChatBot
-						onSubmitData={handleCustomInput}
+						onSubmitData={handleChatSubmit}
 						customBotMessage={getBotMessage()}
-						showButtons={showDescriptionButtons}
-						onButtonClick={(choice) => handleDescriptionChoice(choice, (msg) => handleCustomInput('', (m) => msg.sender === 'bot' && m.text))}
+						showButtons={showButtons}
+						buttonOptions={buttonOptions}
+						onButtonClick={handleButtonClick}
+						isLoading={localLoading}
 						startRegistration={startRegistration}
 					/>
 				);
@@ -822,7 +805,7 @@ export const MainContent = memo(({ selectedMenu, isLoading = false, isSidebarOpe
 	return (
 		<main
 			ref={mainRef}
-			onClick={handleSwipeRight}
+			onClick={() => setIsSwiped(true)}
 			className={`md:fixed rounded-br-2xl bg-white pr-4 md:pt-2 md:px-6 md:left-0 w-screen md:w-[calc(100vw-17rem)] h-[calc(100vh-136px)] overflow-y-auto overflow-x-hidden transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-full' : '-translate-x-0'
 				} ${!isSidebarOpen ? 'md:hidden' : 'md:block'} md:translate-x-0 z-10`}
 		>
