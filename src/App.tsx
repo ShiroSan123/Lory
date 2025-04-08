@@ -56,7 +56,7 @@ function App() {
 					<Route path="/" element={<HomePage />} />
 					<Route path="/Dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 					<Route path="/BusinessRegPage" element={<BusinessRegPage />} />
-					<Route path="/RegUser" element={<RegUser />} />
+					{/* <Route path="/RegUser" element={<RegUser />} /> */}
 					<Route path="/Gallery" element={<Gallery />} />
 					<Route path="/TelegramProfile" element={<TelegramProfile />} />
 					<Route path="/LoginUser" element={<LoginUser />} />

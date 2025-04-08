@@ -1,14 +1,15 @@
-import { useState } from 'react';
-import axiosInstance from './scripts/axiosInstance'; // Импортируем настроенный экземпляр Axios
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const LoginUser = () => {
 	const [formData, setFormData] = useState({
-		email: '',
-		password: '',
+		telegramId: "",
+		name: "",
+		email: "",
 	});
-	const [responseMessage, setResponseMessage] = useState('');
-	const [error, setError] = useState('');
+	const [responseMessage, setResponseMessage] = useState("");
+	const [error, setError] = useState("");
 	const navigate = useNavigate();
 
 	const handleChange = (e) => {
@@ -17,33 +18,73 @@ const LoginUser = () => {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
-		setResponseMessage('');
-		setError('');
+		setResponseMessage("");
+		setError("");
 
 		try {
-			console.log('Sending request to:', `${import.meta.env.VITE_API_BASE_URL}/auth/login`);
-			console.log('Form data:', formData);
+			// Шаг 1: Авторизация (POST /auth/oauth)
+			console.log("Sending request to:", `${import.meta.env.VITE_API_BASE_URL}/auth/oauth`);
+			console.log("Form data:", formData);
 
-			const response = await axiosInstance.post('/auth/login', formData);
+			const authResponse = await axios.post(
+				`${import.meta.env.VITE_API_BASE_URL}/auth/oauth`,
+				formData,
+				{
+					headers: {
+						"Content-Type": "application/json",
+					},
+				}
+			);
 
-			console.log('Response data:', response.data);
+			console.log("Auth response data:", authResponse.data);
 
-			const { accessToken, refreshToken, user, id } = response.data;
-			if (accessToken) {
-				localStorage.setItem('token', accessToken); // Сохраняем accessToken
-				localStorage.setItem('refreshToken', refreshToken); // Сохраняем refreshToken
-				localStorage.setItem('user', user); // Сохраняем User
-				localStorage.setItem('id', id); // Сохраняем Id
-				console.log('Saved token:', localStorage.getItem('token'));
-				console.log('Saved refresh token:', localStorage.getItem('refreshToken'));
-				setResponseMessage('Login successful!');
-				setTimeout(() => navigate('/Dashboard'), 2000);
-			} else {
-				setError('No access token received from server.');
+			const { accessToken, user, id } = authResponse.data;
+			if (!accessToken) {
+				setError("No access token received from server.");
+				return;
 			}
+
+			// Шаг 2: Получение данных пользователя (GET /auth/me)
+			let userData = null;
+			try {
+				console.log("Fetching user data with token:", accessToken);
+				const userResponse = await axios.get(
+					`${import.meta.env.VITE_API_BASE_URL}/auth/me`,
+					{
+						headers: {
+							Authorization: `Bearer ${accessToken}`,
+						},
+					}
+				);
+
+				console.log("Fetched user data:", userResponse.data);
+
+				// Добавляем accessToken в данные пользователя
+				userData = {
+					...userResponse.data, // Данные из /auth/me
+					token: accessToken,   // Добавляем token
+				};
+
+				// Сохраняем userData в localStorage
+				localStorage.setItem("userData", JSON.stringify(userData));
+			} catch (fetchErr) {
+				console.error("Error fetching user data:", fetchErr);
+				setError("Failed to fetch user data, but login was successful.");
+				// Продолжаем, даже если не удалось получить данные
+			}
+
+			// Сохраняем остальные данные в localStorage
+			localStorage.setItem("token", accessToken);
+			localStorage.setItem("user", user);
+			localStorage.setItem("id", id);
+			console.log("Saved token:", localStorage.getItem("token"));
+
+			// Шаг 3: Успешное завершение
+			setResponseMessage("Login successful!");
+			setTimeout(() => navigate("/Dashboard"), 2000);
 		} catch (err) {
-			setError(err.response?.data?.message || 'Login failed. Please try again.');
-			console.error('Error:', err);
+			setError(err.response?.data?.message || "Login failed. Please try again.");
+			console.error("Error:", err);
 		}
 	};
 
@@ -52,6 +93,36 @@ const LoginUser = () => {
 			<div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
 				<h2 className="text-2xl font-bold mb-6 text-center">Login to Your Account</h2>
 				<form onSubmit={handleSubmit} className="space-y-4">
+					<div>
+						<label htmlFor="telegramId" className="block text-sm font-medium">
+							Telegram ID
+						</label>
+						<input
+							type="text"
+							name="telegramId"
+							id="telegramId"
+							value={formData.telegramId}
+							onChange={handleChange}
+							className="mt-1 p-2 w-full border rounded-md focus:ring focus:ring-blue-300"
+							placeholder="Enter telegram ID"
+							required
+						/>
+					</div>
+					<div>
+						<label htmlFor="name" className="block text-sm font-medium">
+							Name
+						</label>
+						<input
+							type="text"
+							name="name"
+							id="name"
+							value={formData.name}
+							onChange={handleChange}
+							className="mt-1 p-2 w-full border rounded-md focus:ring focus:ring-blue-300"
+							placeholder="Enter name"
+							required
+						/>
+					</div>
 					<div>
 						<label htmlFor="email" className="block text-sm font-medium">
 							Email
@@ -67,21 +138,6 @@ const LoginUser = () => {
 							required
 						/>
 					</div>
-					<div>
-						<label htmlFor="password" className="block text-sm font-medium">
-							Password
-						</label>
-						<input
-							type="password"
-							name="password"
-							id="password"
-							value={formData.password}
-							onChange={handleChange}
-							className="mt-1 p-2 w-full border rounded-md focus:ring focus:ring-blue-300"
-							placeholder="Enter password"
-							required
-						/>
-					</div>
 					{responseMessage && (
 						<p className="text-green-600 text-center">{responseMessage}</p>
 					)}
@@ -93,12 +149,6 @@ const LoginUser = () => {
 						Login
 					</button>
 				</form>
-				<p className="mt-4 text-center text-sm">
-					Don't have an account?{' '}
-					<a href="/RegUser" className="text-blue-600 hover:underline">
-						Register here
-					</a>
-				</p>
 			</div>
 		</div>
 	);

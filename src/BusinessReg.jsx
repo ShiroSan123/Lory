@@ -507,9 +507,10 @@
 
 // export default BusinessRegistration;
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import ChatBot from './components/ChatBot';
 
 const BusinessRegistration = () => {
 	const token = localStorage.getItem('token');
@@ -517,71 +518,100 @@ const BusinessRegistration = () => {
 
 	const [formData, setFormData] = useState({
 		name: '',
-		businessType: 'RESTAURANT',
-		businessTerm: '',
-		city: '',
-		street: '',
-		workTime: '',
-		holidays: '',
 		description: '',
 		descriptionAI: '',
-		logo: null,
-		calendar: false,
-		analytics: false,
-		telegram: false,
-		aiText: false,
-		socials: false,
-		delivery: false,
+		type: '',
+		theme: { color: '' },
 	});
 	const [step, setStep] = useState(1);
 	const [isLoading, setIsLoading] = useState(false);
 	const [localLoading, setLocalLoading] = useState(false);
 	const [responseMessage, setResponseMessage] = useState('');
 	const [error, setError] = useState('');
-	const [showDescriptionButtons, setShowDescriptionButtons] = useState(false);
-	const [isReenteringDescription, setIsReenteringDescription] = useState(false); // Новое состояние для повторного ввода описания
+	const [showButtons, setShowButtons] = useState(false);
+	const [buttonOptions, setButtonOptions] = useState([]);
+	const [businesses, setBusinesses] = useState([]);
+	const [isChoosingDescription, setIsChoosingDescription] = useState(false);
 
-	const steps = [
-		'name', 'businessTerm', 'city', 'street', 'workTime', 'holidays',
-		'description', 'descriptionAI', 'logo', 'calendar', 'analytics',
-		'telegram', 'aiText', 'socials', 'delivery',
-	];
+	const steps = ['name', 'description', 'type', 'theme'];
 
 	const stepQuestions = {
 		name: 'Как называется твой бизнес? (обязательное поле)',
-		businessTerm: 'Какой направление подходит твоему бизнесу? напиши по типу "ресторан, услуги, барбершоп и т.д."',
-		city: 'В каком городе находится твой бизнес?',
-		street: 'Укажи улицу и номер дома.',
-		workTime: 'Какой у тебя режим работы? (например, "Пн-Пт 9:00-18:00")',
-		holidays: 'Какие у тебя выходные? Выбери: "Суббота" или "Воскресенье"',
 		description: 'Расскажи немного о своем бизнесе.',
-		descriptionAI: 'Хочешь, чтобы я сгенерировал описание для твоего бизнеса? Напиши "да" или "нет".',
-		logo: 'Пришли файл логотипа или напиши "нет", если его пока нет.',
-		calendar: 'Нужен ли календарь бронирования? (да/нет)',
-		analytics: 'Хочешь включить аналитику? (да/нет)',
-		telegram: 'Подключить сотрудников через Telegram? (да/нет)',
-		aiText: 'Использовать генерацию текста ИИ? (да/нет)',
-		socials: 'Подключить клиентов через соцсети? (да/нет)',
-		delivery: 'Нужна ли доставка? (да/нет)',
+		type: 'Выбери тип бизнеса:',
+		theme: 'Выбери цветовую тему для бизнеса:',
 	};
 
-	const validationRules = {
-		holidays: ['Суббота', 'Воскресенье'],
+	const buttonOptionsMap = {
+		type: [
+			{ label: 'Услуги', value: 'SERVICE' },
+			{ label: 'Ресторан', value: 'RESTAURANT' },
+			{ label: 'Недвижимость', value: 'REAL_ESTATE' },
+		],
+		theme: [
+			{ label: 'Синий', value: 'blue' },
+			{ label: 'Зеленый', value: 'green' },
+			{ label: 'Красный', value: 'red' },
+		],
+		chooseDescription: [
+			{ label: 'Использовать мое описание', value: 'user' },
+			{ label: 'Использовать описание ИИ', value: 'ai' },
+		],
+	};
+
+	const descAI = async (addMessage) => {
+		console.log('[BusinessRegistration] descAI: Starting description generation');
+		setLocalLoading(true);
+		setResponseMessage('');
+		setError('');
+
+		const data = {
+			company_name: formData.name,
+			industry: formData.type,
+			description: formData.description,
+		};
+
+		try {
+			const response = await axios.post(
+				'https://my-vercel-server-seven.vercel.app/api/generate_description',
+				data,
+				{
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer a8f3cd34d3ad67e1f4b3f1a8d3cc432f9b2f9c9ac4d84c79e0d40a8c9ef0c8dd`,
+					},
+				}
+			);
+			const { text } = response.data;
+			console.log('[BusinessRegistration] descAI: Generated description:', text);
+			setFormData((prev) => ({ ...prev, descriptionAI: text }));
+			setResponseMessage('Description generated successfully!');
+			localStorage.setItem('descBusiness', text);
+
+			addMessage({ sender: 'bot', text: 'Вот сгенерированное описание:' });
+			addMessage({ sender: 'bot', text: text });
+			addMessage({ sender: 'bot', text: 'Какое описание ты хочешь использовать?' });
+			setShowButtons(true);
+			setButtonOptions(buttonOptionsMap.chooseDescription);
+			setIsChoosingDescription(true);
+		} catch (err) {
+			console.error('[BusinessRegistration] descAI: Error:', err);
+			setError(err.response?.data?.message || 'Failed to generate description.');
+			addMessage({ sender: 'bot', text: err.response?.data?.message || 'Failed to generate description.' });
+		} finally {
+			setLocalLoading(false);
+		}
 	};
 
 	const handleChatSubmit = async (userInput, addMessage) => {
+		console.log(`[BusinessRegistration] handleChatSubmit: step=${step}, userInput=${userInput}`);
 		const currentField = steps[step - 1];
 		const trimmedInput = userInput.trim();
 
-		if (isReenteringDescription) {
-			// Если пользователь меняет описание
-			if (trimmedInput.toLowerCase() === 'да') {
-				await generateDescriptionAI(addMessage);
-			} else {
-				setFormData((prev) => ({ ...prev, description: trimmedInput }));
-				await generateDescriptionAI(addMessage);
-			}
-			setIsReenteringDescription(false);
+		if (buttonOptionsMap[currentField] && !isChoosingDescription) {
+			console.log(`[BusinessRegistration] Showing buttons for ${currentField}:`, buttonOptionsMap[currentField]);
+			setShowButtons(true);
+			setButtonOptions(buttonOptionsMap[currentField]);
 			return;
 		}
 
@@ -589,8 +619,8 @@ const BusinessRegistration = () => {
 
 		updateFormData(currentField, trimmedInput);
 
-		if (currentField === 'descriptionAI' && trimmedInput.toLowerCase() === 'да') {
-			await generateDescriptionAI(addMessage);
+		if (currentField === 'description') {
+			await descAI(addMessage);
 			return;
 		}
 
@@ -598,12 +628,9 @@ const BusinessRegistration = () => {
 	};
 
 	const validateInput = (field, input) => {
+		console.log(`[BusinessRegistration] validateInput: field=${field}, input=${input}`);
 		if (field === 'name' && !input) {
 			setError('Название бизнеса обязательно.');
-			return false;
-		}
-		if (validationRules[field] && !validationRules[field].includes(input)) {
-			setError(`Выбери одну из опций: "${validationRules[field].join('" или "')}".`);
 			return false;
 		}
 		setError('');
@@ -611,24 +638,48 @@ const BusinessRegistration = () => {
 	};
 
 	const updateFormData = (field, value) => {
-		const booleanFields = ['calendar', 'analytics', 'telegram', 'aiText', 'socials', 'delivery'];
-		setFormData((prev) => ({
-			...prev,
-			[field]: booleanFields.includes(field) ? value.toLowerCase() === 'да' : value,
-			...(field === 'logo' && { logo: value === 'нет' ? null : value }),
-		}));
+		console.log(`[BusinessRegistration] updateFormData: field=${field}, value=${value}`);
+		if (field === 'theme') {
+			setFormData((prev) => ({
+				...prev,
+				theme: { color: value },
+			}));
+		} else {
+			setFormData((prev) => ({
+				...prev,
+				[field]: value,
+			}));
+		}
 	};
 
 	const proceedToNextStepOrSubmit = (addMessage) => {
+		console.log(`[BusinessRegistration] proceedToNextStepOrSubmit: current step=${step}, total steps=${steps.length}`);
+		setShowButtons(false);
+		setButtonOptions([]);
 		if (step < steps.length) {
 			setStep((prev) => prev + 1);
 			addMessage({ sender: 'bot', text: stepQuestions[steps[step]] });
+			if (buttonOptionsMap[steps[step]]) {
+				setShowButtons(true);
+				setButtonOptions(buttonOptionsMap[steps[step]]);
+			}
 		} else {
+			displayFormData(addMessage);
 			handleSubmit(addMessage);
 		}
 	};
 
+	const displayFormData = (addMessage) => {
+		console.log('[BusinessRegistration] displayFormData:', formData);
+		addMessage({ sender: 'bot', text: 'Вот данные, которые ты ввел:' });
+		addMessage({
+			sender: 'bot',
+			text: `Название: ${formData.name}\nОписание: ${formData.description}\nТип бизнеса: ${formData.type}\nЦветовая тема: ${formData.theme.color}`,
+		});
+	};
+
 	const handleSubmit = async (addMessage) => {
+		console.log('[BusinessRegistration] handleSubmit: Sending data to server:', formData);
 		setIsLoading(true);
 		setResponseMessage('');
 		setError('');
@@ -640,17 +691,26 @@ const BusinessRegistration = () => {
 			return;
 		}
 
-		const formPayload = createFormPayload();
+		const formPayload = {
+			name: formData.name,
+			description: formData.description,
+			type: formData.type,
+			theme: formData.theme,
+		};
+
 		try {
 			const response = await axios.post(
-				`${import.meta.env.VITE_API_BASE_URL}/companies`,
+				`${import.meta.env.VITE_API_BASE_URL}/business`,
 				formPayload,
 				{ headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
 			);
+			console.log('[BusinessRegistration] handleSubmit: Success response:', response.data);
 			addMessage({ sender: 'bot', text: 'Бизнес успешно зарегистрирован!' });
 			setResponseMessage('Бизнес успешно зарегистрирован!');
+			fetchBusinesses(addMessage);
 			setTimeout(() => navigate('/Dashboard'), 2000);
 		} catch (err) {
+			console.error('[BusinessRegistration] handleSubmit: Error:', err);
 			setError(err.response?.data?.message || 'Ошибка при регистрации.');
 			addMessage({ sender: 'bot', text: err.response?.data?.message || 'Ошибка при регистрации.' });
 		} finally {
@@ -658,66 +718,68 @@ const BusinessRegistration = () => {
 		}
 	};
 
-	const createFormPayload = () => {
-		const data = new FormData();
-		Object.entries(formData).forEach(([key, value]) => {
-			data.append(key, typeof value === 'boolean' ? value.toString() : value || '');
-		});
-		return data;
-	};
-
-	const generateDescriptionAI = async (addMessage) => {
-		setLocalLoading(true);
+	const fetchBusinesses = async (addMessage) => {
+		console.log('[BusinessRegistration] fetchBusinesses: Fetching businesses');
 		try {
-			const response = await axios.post(
-				'https://my-vercel-server-seven.vercel.app/api/generate_description',
-				{ company_name: formData.name, industry: formData.businessTerm, description: formData.description },
-				{ headers: { 'Content-Type': 'application/json', Authorization: `Bearer a8f3cd34d3ad67e1f4b3f1a8d3cc432f9b2f9c9ac4d84c79e0d40a8c9ef0c8dd` } }
+			const response = await axios.get(
+				`${import.meta.env.VITE_API_BASE_URL}/business/admin`,
+				{ headers: { Authorization: `Bearer ${token}` } }
 			);
-			const generatedText = response.data.text;
-			setFormData((prev) => ({ ...prev, descriptionAI: generatedText }));
-			addMessage({ sender: 'bot', text: 'Вот что я сгенерировал для твоего бизнеса:' });
-			addMessage({ sender: 'bot', text: generatedText });
-			addMessage({ sender: 'bot', text: 'Оставить это описание или поменять? Напиши "оставить" или "поменять".' });
-			setShowDescriptionButtons(true);
-			localStorage.setItem('descBusiness', generatedText);
+			console.log('[BusinessRegistration] fetchBusinesses: Success response:', response.data);
+			setBusinesses(response.data);
+			addMessage({ sender: 'bot', text: 'Вот список твоих компаний:' });
+			response.data.forEach((business) => {
+				addMessage({
+					sender: 'bot',
+					text: `Название: ${business.name}, Тип: ${business.type}, Описание: ${business.description}, Тема: ${business.theme.color}`,
+				});
+			});
 		} catch (err) {
-			setError(err.response?.data?.message || 'Ошибка генерации описания.');
-			addMessage({ sender: 'bot', text: err.response?.data?.message || 'Ошибка генерации описания.' });
-		} finally {
-			setLocalLoading(false);
+			console.error('[BusinessRegistration] fetchBusinesses: Error:', err);
+			setError(err.response?.data?.message || 'Ошибка при получении данных о компаниях.');
+			addMessage({ sender: 'bot', text: err.response?.data?.message || 'Ошибка при получении данных о компаниях.' });
 		}
 	};
 
-	const handleDescriptionChoice = (choice, addMessage) => {
-		if (choice === 'оставить') {
-			setShowDescriptionButtons(false);
-			setStep((prev) => prev + 1);
-			addMessage({ sender: 'bot', text: stepQuestions[steps[step]] });
-		} else if (choice === 'поменять') {
-			setFormData((prev) => ({ ...prev, descriptionAI: '' }));
-			setShowDescriptionButtons(false);
-			setIsReenteringDescription(true); // Устанавливаем флаг для повторного ввода
-			setStep((prev) => prev - 1); // Возвращаем шаг назад к descriptionAI
-			addMessage({ sender: 'bot', text: 'Введи новое описание для генерации или напиши "да" для повторной генерации.' });
+	const handleButtonClick = (value, addMessage) => {
+		console.log(`[BusinessRegistration] handleButtonClick: value=${value}`);
+		const currentField = steps[step - 1];
+		addMessage({ sender: 'user', text: value });
+
+		if (isChoosingDescription) {
+			console.log(`[BusinessRegistration] handleButtonClick: Choosing description, value=${value}`);
+			if (value === 'user') {
+				addMessage({ sender: 'bot', text: 'Выбрано твое описание.' });
+			} else if (value === 'ai') {
+				setFormData((prev) => ({
+					...prev,
+					description: prev.descriptionAI,
+				}));
+				addMessage({ sender: 'bot', text: 'Выбрано описание, сгенерированное ИИ.' });
+			}
+			setIsChoosingDescription(false);
+			proceedToNextStepOrSubmit(addMessage);
+		} else {
+			updateFormData(currentField, value);
+			proceedToNextStepOrSubmit(addMessage);
 		}
 	};
 
 	const getBotMessage = () => {
 		if (isLoading) return 'Регистрирую твой бизнес...';
+		if (localLoading) return 'Генерирую описание...';
 		if (responseMessage) return responseMessage;
 		if (error) return error;
-		if (isReenteringDescription) return 'Введи новое описание для генерации или напиши "да" для повторной генерации.';
-		if (showDescriptionButtons) return 'Оставить это описание или поменять? Напиши "оставить" или "поменять".';
+		if (isChoosingDescription) return 'Какое описание ты хочешь использовать?';
 		return stepQuestions[steps[step - 1]];
 	};
 
 	const handleCustomInput = (input, addMessage) => {
-		if (showDescriptionButtons) {
-			handleDescriptionChoice(input.trim().toLowerCase(), addMessage);
-		} else {
-			handleChatSubmit(input, addMessage);
+		console.log(`[BusinessRegistration] handleCustomInput: input=${input}`);
+		if (showButtons) {
+			return;
 		}
+		handleChatSubmit(input, addMessage);
 	};
 
 	return (
@@ -729,8 +791,10 @@ const BusinessRegistration = () => {
 				<ChatBot
 					onSubmitData={handleCustomInput}
 					customBotMessage={getBotMessage()}
-					showButtons={showDescriptionButtons}
-					onButtonClick={(choice) => handleDescriptionChoice(choice, (msg) => handleCustomInput('', (m) => msg.sender === 'bot' && m.text))}
+					showButtons={showButtons}
+					buttonOptions={buttonOptions}
+					onButtonClick={handleButtonClick}
+					isLoading={localLoading} // Передаем состояние загрузки
 				/>
 			</div>
 		</div>

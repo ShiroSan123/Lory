@@ -1,18 +1,39 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 const Header = ({ onToggleLeftSidebar, selectedMenu, selectedEmployee }) => {
-	const token = localStorage.getItem('token');
-	const userName = localStorage.getItem('userName');
 	const navigate = useNavigate();
+	const [userData, setUserData] = useState(null);
+	const [error, setError] = useState("");
+	const [isLoading, setIsLoading] = useState(true);
+
+	useEffect(() => {
+		const storedUserData = localStorage.getItem("userData");
+		if (storedUserData) {
+			try {
+				const parsedUserData = JSON.parse(storedUserData);
+				setUserData(parsedUserData);
+			} catch (err) {
+				console.error("Error parsing userData:", err);
+				setError("Failed to load user data.");
+			}
+		} else {
+			setError("No user data found. Please log in again.");
+		}
+		setIsLoading(false);
+	}, []);
 
 	const handleLogout = () => {
-		localStorage.removeItem('token');
-		localStorage.removeItem('refreshToken');
-		localStorage.removeItem('user');
-		localStorage.removeItem('id');
-		localStorage.removeItem('companies');
-		navigate('/');
+		localStorage.removeItem("token");
+		localStorage.removeItem("refreshToken");
+		localStorage.removeItem("user");
+		localStorage.removeItem("id");
+		localStorage.removeItem("companies");
+		localStorage.removeItem("userData"); // Удаляем userData при выходе
+		navigate("/");
 	};
+
+	const token = userData?.token; // Получаем token из userData
 
 	return (
 		<header className="fixed bottom-0 left-0 right-0 h-30 flex md:gap-4 *:items-center justify-between md:justify-normal bg-white md:bg-inherit">
@@ -20,7 +41,7 @@ const Header = ({ onToggleLeftSidebar, selectedMenu, selectedEmployee }) => {
 				<button className="p-2 rounded-full hover:bg-gray-200" aria-label="Settings">
 					<span>{selectedMenu}</span>
 				</button>
-				{selectedMenu === 'Сотрудники' && selectedEmployee && (
+				{selectedMenu === "Сотрудники" && selectedEmployee && (
 					<div className="flex flex-col text-sm">
 						<span>Телефон: {selectedEmployee.phone}</span>
 						<span>Посещений: {selectedEmployee.visits}</span>
@@ -37,11 +58,16 @@ const Header = ({ onToggleLeftSidebar, selectedMenu, selectedEmployee }) => {
 				>
 					<span>☰</span>
 				</button>
-				{token ? (
+				{isLoading ? (
+					<p>Loading...</p>
+				) : error ? (
+					<p className="text-red-600">{error}</p>
+				) : token ? (
 					<div className="flex items-center gap-4">
 						<a className="text-lg font-bold" href="/dashboard">
-							<p>{userName}</p>
+							<p>{userData?.name || "User"}</p>
 						</a>
+						{/* <p className="text-sm">Token: {token}</p> Отображаем token */}
 						<button
 							onClick={handleLogout}
 							className="flex items-center p-2 gap-2 mb-2 rounded-lg hover:bg-gray-100 cursor-pointer w-full text-left text-red-600"
@@ -57,6 +83,6 @@ const Header = ({ onToggleLeftSidebar, selectedMenu, selectedEmployee }) => {
 			</div>
 		</header>
 	);
-}
+};
 
 export default Header;

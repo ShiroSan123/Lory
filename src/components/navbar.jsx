@@ -27,8 +27,8 @@ const Header = () => {
 			{/* Правая часть: кнопка "Регистрация" */}
 			<a href='/BusinessRegPage' className='absolute right-5'>
 				{token === null ? (
-					<a href='/RegUser'><button className="text-sm font-medium text-gray-700 hover:text-blue-500 transition-colors sm:text-base lg:text-lg">
-						Регистрация
+					<a href='/LoginUser'><button className="text-sm font-medium text-gray-700 hover:text-blue-500 transition-colors sm:text-base lg:text-lg">
+						Авторизироваться
 					</button></a>
 				) : (
 					<a href='/Dashboard'><button className="text-sm font-medium text-gray-700 hover:text-blue-500 transition-colors sm:text-base lg:text-lg">
