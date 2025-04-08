@@ -54,11 +54,11 @@ const HomePage = () => {
 		console.log( userInfo)
 		console.log("auth")
         localStorage.setItem('userInfo', JSON.stringify(userInfo));
-		localStorage.setItem("auth_me", JSON.stringify(userData));
+		  localStorage.setItem("auth_me", JSON.stringify(userData));
         localStorage.setItem("id", userInfo.id);
         localStorage.setItem("telegramId", userInfo.telegramId);
         localStorage.setItem("name", userInfo.name);
-		localStorage.setItem("user", userInfo.name);
+		  localStorage.setItem("user", userInfo.name);
 
         // Переход к Dashboard через 2 секунды
         setTimeout(() => navigate("/Dashboard"), 2000);
@@ -80,7 +80,7 @@ const HomePage = () => {
           telegramId: userData.user.id,
           name: userData.user.first_name,
         };
-        fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/miniapp`, {
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/oauth`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -107,10 +107,11 @@ const HomePage = () => {
         .then((userInfo) => {
           console.log(userInfo);
           console.log("auth");
+          localStorage.setItem('userInfo', JSON.stringify(userInfo));
           localStorage.setItem("auth_me", JSON.stringify(userData));
-          localStorage.setItem("id", userInfo.id);
-          localStorage.setItem("telegramId", userInfo.telegramId);
-          localStorage.setItem("name", userInfo.name);
+            localStorage.setItem("id", userInfo.id);
+            localStorage.setItem("telegramId", userInfo.telegramId);
+            localStorage.setItem("name", userInfo.name);
           localStorage.setItem("user", userInfo.name);
         
           // Переход к Dashboard через 2 секунды
