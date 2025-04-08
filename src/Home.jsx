@@ -1,6 +1,6 @@
 import './index.css';
 import HeroSection from './sections/Home/hero';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import WhyWee from './sections/Home/WhyWe';
 import Header from './components/navbar';
 import Reviews from './sections/Home/Reviews';
@@ -11,9 +11,13 @@ import { useTelegram } from './context/TelegramContext';
 const HomePage = () => {
   const { isTelegram, userData } = useTelegram();
   const navigate = useNavigate();
+  // Флаг, для того чтобы запрос выполнился только один раз
+  const authTriggered = useRef(false);
 
   useEffect(() => {
-    if (isTelegram && userData) {
+    if (!authTriggered.current && isTelegram && userData) {
+      authTriggered.current = true; // помечаем, что запрос уже выполнен
+
       // Формируем полезную нагрузку для запроса авторизации
       const payload = {
         telegramId: userData.telegramId,
