@@ -83,8 +83,7 @@ const HomePage = () => {
             name: userData.user.first_name,
           };
 
-          localStorage.setItem("photo", userData.photo_url)
-          alert(userData.photo_url)
+          localStorage.setItem("photo", userData.user.photo_url)
   
           // Авторизация через endpoint auth/oauth
           const authResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/oauth`, {
