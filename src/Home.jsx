@@ -11,18 +11,20 @@ import { useTelegram } from './context/TelegramContext';
 const HomePage = () => {
   const { isTelegram, userData } = useTelegram();
   const navigate = useNavigate();
-  // Флаг, для того чтобы запрос выполнился только один раз
+  // Флаг, позволяющий выполнить запрос авторизации только один раз
   const authTriggered = useRef(false);
 
   useEffect(() => {
     if (!authTriggered.current && isTelegram && userData) {
       authTriggered.current = true; // помечаем, что запрос уже выполнен
-
+      
       // Формируем полезную нагрузку для запроса авторизации
       const payload = {
         telegramId: userData.user.id,
         name: userData.user.first_name,
       };
+
+      // Запрос авторизации через эндпоинт auth/oauth
       fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/oauth`, {
         method: 'POST',
         headers: {
@@ -38,16 +40,16 @@ const HomePage = () => {
           return res.json();
         })
         .then((data) => {
-			alert(JSON.stringify(data, null, 2))
-          // Сохраняем полученные токены
+          // Сохраняем полученные токены в localStorage
           localStorage.setItem('accessToken', data.accessToken);
-          localStorage.setItem('refreshToken', data.refreshToken);
-          // Далее отправляем запрос к эндпоинту auth/me для получения дополнительных данных пользователя
+          localStorage.setItem('refreshToken', data.refreshToken);	
+		alert(data.accessToken)
+          // Запрос дополнительных данных пользователя через эндпоинт auth/me,
+          // используя полученный accessToken для авторизации запроса
           return fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
-              // Передаём токен для авторизации запроса
               'Authorization': `Bearer ${data.accessToken}`,
             },
           });
@@ -59,9 +61,9 @@ const HomePage = () => {
           return res.json();
         })
         .then((userInfo) => {
-          // Сохраняем данные пользователя, полученные с auth/me
+          // Сохраняем данные пользователя, полученные через auth/me, в localStorage
           localStorage.setItem('userInfo', JSON.stringify(userInfo));
-          // Переходим на страницу Dashboard
+          // Переход на страницу Dashboard после успешной авторизации
           navigate('/Dashboard');
         })
         .catch((err) => {
