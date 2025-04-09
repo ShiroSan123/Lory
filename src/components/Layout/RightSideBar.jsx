@@ -124,7 +124,7 @@ function RightSidebar({ isOpen, onSelectMenu, selectedService, onClose, onOpen }
 
 	return (
 		<aside
-			className={`fixed top-0 right-0 w-64 h-[calc(100vh-136px)] md:rounded-bl-2xl z-20 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'
+			className={`fixed top-0 right-0 w-64 h-[calc(100vh-136px)] md:rounded-bl-2xl z-20 transform transition-transform duration-300 ${isOpen ? '-translate-x-0' : 'translate-x-full'
 				} md:translate-x-0 md:top-0 flex flex-col ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'
 				}`}
 			aria-label="Боковая панель"
@@ -133,7 +133,7 @@ function RightSidebar({ isOpen, onSelectMenu, selectedService, onClose, onOpen }
 			onTouchEnd={handleTouchEnd}
 		>
 			<div className="flex-1 overflow-y-auto p-4">
-				<img src="/logoMain.png" alt="" className="mb-5" />
+				<a href="/"><img src="/logoMain.png" alt="" className="mb-5" /></a>
 				{isLoading ? (
         <p className={  theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
           Загрузка компаний...
