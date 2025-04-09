@@ -5,21 +5,21 @@ function RightSidebarServices({ baseUrl, companyId, service }) {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  // Состояние для отслеживания раскрытия услуг - реализовано как аккордеон (только один открытый)
+  // Состояние для аккордеона (раскрытия услуг)
   const [expandedServiceId, setExpandedServiceId] = useState(null);
-
-  // Состояния для дополнительного элемента (кастомная услуга)
+  // Состояния для новой услуги (кастомная)
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customInput, setCustomInput] = useState('');
-  const [customService, setCustomService] = useState('');
+  // Состояние для отслеживания последнего клика
+  const [lastClicked, setLastClicked] = useState({ serviceId: null, index: null });
 
-  // Функция для вызова родительского обработчика с объектом параметров
+  // Вызываем обработчик родительского компонента
   const onService = (params) => {
     service(params);
   };
 
   useEffect(() => {
-    if (!companyId) return; // Если компания не выбрана, ничего не запрашиваем
+    if (!companyId) return; // Если компания не выбрана, запрос не выполняется
 
     const fetchServices = async () => {
       setLoading(true);
@@ -46,26 +46,39 @@ function RightSidebarServices({ baseUrl, companyId, service }) {
     setExpandedServiceId(null);
   }, [baseUrl, companyId]);
 
-  // Загрузка кастомной услуги из localStorage при монтировании
-  useEffect(() => {
-    const storedCustomService = localStorage.getItem('customService');
-    if (storedCustomService) {
-      setCustomService(storedCustomService);
-    }
-  }, []);
-
   const toggleService = (serviceId) => {
     setExpandedServiceId((prevServiceId) =>
       prevServiceId === serviceId ? null : serviceId
     );
   };
 
-  const saveCustomService = () => {
+  // Создание новой услуги через POST-запрос
+  const saveCustomService = async () => {
     if (customInput.trim() === '') return;
-    setCustomService(customInput);
-    localStorage.setItem('customService', customInput);
-    setCustomInput('');
-    setShowCustomInput(false);
+    try {
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      };
+      const payload = {
+        moduleType: "BOOKING",
+        customParameters: {
+          displayType: "list",
+          name: customInput,
+          items: []
+        }
+      };
+      const response = await axios.post(`${baseUrl}/services/${companyId}`, payload, config);
+      // Обновляем список услуг, добавляя новую услугу из ответа
+      setServices(prevServices => [...prevServices, response.data]);
+      setCustomInput('');
+      setShowCustomInput(false);
+    } catch (err) {
+      console.error(err);
+      setError('Ошибка при создании новой услуги');
+    }
   };
 
   return (
@@ -78,37 +91,38 @@ function RightSidebarServices({ baseUrl, companyId, service }) {
         <p className="text-gray-600">Услуги не найдены.</p>
       ) : (
         <>
-          {services.map((serviceItem, index) => {
+          {services.map((serviceItem) => {
             const items = serviceItem.customParameters?.items || [];
-            const isLastItem = index === services.length - 1;
             return (
               <div key={serviceItem.id} className="mb-4 rounded-lg">
-                {/* Заголовок услуги */}
                 <button
-                  className="flex text-gray-500 text-lg items-center justify-between w-full p-2 text-left hover:bg-gray-100 rounded-lg border-0 focus:outline-none"
+                  className={`flex text-gray-500 text-lg items-center justify-between w-full p-2 text-left hover:bg-gray-100 rounded-lg border-0 focus:outline-none ${
+                    lastClicked.serviceId === serviceItem.id && lastClicked.index === -1
+                      ? 'bg-blue-200'
+                      : ''
+                  }`}
                   onClick={() => {
                     toggleService(serviceItem.id);
                     onService({ id: serviceItem.id, index: -1 });
+                    setLastClicked({ serviceId: serviceItem.id, index: -1 });
                   }}
                 >
                   <span className="font-medium">
                     {serviceItem.customParameters.name || 'Без названия услуги'}
                   </span>
-
-                    <img
-                      src={
-                        expandedServiceId === serviceItem.id
-                          ? '/ico/arDown.svg'
-                          : '/ico/arRight.svg'
-                      }
-                      alt={
-                        expandedServiceId === serviceItem.id
-                          ? 'Свернуть'
-                          : 'Развернуть'
-                      }
-                      className="w-4 h-4"
-                    />
-
+                  <img
+                    src={
+                      expandedServiceId === serviceItem.id
+                        ? '/ico/arDown.svg'
+                        : '/ico/arRight.svg'
+                    }
+                    alt={
+                      expandedServiceId === serviceItem.id
+                        ? 'Свернуть'
+                        : 'Развернуть'
+                    }
+                    className="w-4 h-4"
+                  />
                 </button>
                 {expandedServiceId === serviceItem.id && (
                   <div className="pl-4 mt-2">
@@ -118,8 +132,15 @@ function RightSidebarServices({ baseUrl, companyId, service }) {
                       items.map((item, index) => (
                         <div key={index} className="mb-2">
                           <button
-                            className="text-gray-500 text-lg hover:underline focus:outline-none"
-                            onClick={() => onService({ id: serviceItem.id, index })}
+                            className={`text-gray-500 text-lg hover:underline focus:outline-none ${
+                              lastClicked.serviceId === serviceItem.id && lastClicked.index === index
+                                ? 'bg-blue-200'
+                                : ''
+                            }`}
+                            onClick={() => {
+                              onService({ id: serviceItem.id, index });
+                              setLastClicked({ serviceId: serviceItem.id, index });
+                            }}
                           >
                             {item.name || 'Без названия'}
                           </button>
@@ -131,19 +152,20 @@ function RightSidebarServices({ baseUrl, companyId, service }) {
               </div>
             );
           })}
-          {/* Новый элемент для кастомной услуги */}
           <div className="mb-4 rounded-lg">
             <button
-              className="flex text-gray-500 text-lg items-center justify-between w-full p-2 text-left hover:bg-gray-100 rounded-lg border-0 focus:outline-none"
-              onClick={() => setShowCustomInput((prev) => !prev)}
+              className={`flex text-gray-500 text-lg items-center justify-between w-full p-2 text-left hover:bg-gray-100 rounded-lg border-0 focus:outline-none ${
+                lastClicked.serviceId === 'custom' ? 'bg-blue-200' : ''
+              }`}
+              onClick={() => {
+                setShowCustomInput((prev) => !prev);
+                setLastClicked({ serviceId: 'custom', index: null });
+              }}
             >
-              <span className="font-medium">
-                {customService || 'Добавить свою услугу'}
-              </span>
-             +
+              <span className="font-medium">+</span>
             </button>
             {showCustomInput && (
-              <div className="pl-4 mt-2   ">
+              <div className="pl-4 mt-2">
                 <input
                   type="text"
                   value={customInput}

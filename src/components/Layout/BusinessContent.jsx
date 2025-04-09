@@ -1,125 +1,150 @@
-// BusinessContent.jsx
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import MenuCard from './Items/MenuCard';
-import BookingCard from './Items/BookingCard';
-import DashboardAnalytics from './Items/Dashboard'; // Компонент дешборда аналитики
-import { useNavigate } from 'react-router-dom';
 
-const BusinessContent = ({ token, baseUrl, selectedServiceId, onSelectItem, index }) => {
-  const navigate = useNavigate();
+function RightSidebarServices({ baseUrl, companyId, service }) {
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  // Состояние для отслеживания раскрытия услуг (аккордеон)
+  const [expandedServiceId, setExpandedServiceId] = useState(null);
+  // Состояния для кастомной услуги
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customInput, setCustomInput] = useState('');
+  const [customService, setCustomService] = useState('');
+  // Состояние для отслеживания последнего клика
+  const [lastClicked, setLastClicked] = useState({ serviceId: null, index: null });
 
-  const [companyData, setCompanyData] = useState(null);
-  const [selectedService, setSelectedService] = useState(null);
-  const [fetchError, setFetchError] = useState('');
-  const [isFetching, setIsFetching] = useState(false);
-  // Локальное состояние для выбранного индекса (если необходимо)
-  const [selectedItemIndex, setSelectedItemIndex] = useState(-1);
-
-  const fetchCompanyData = useCallback(async () => {
-    if (!selectedServiceId || !token) {
-      setFetchError('Отсутствует ID услуги или токен авторизации');
-      return;
-    }
-    setIsFetching(true);
-    setFetchError('');
-    try {
-      const response = await axios.get(
-        `${baseUrl}/business/admin`,
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
-      );
-      const businesses = response.data;
-
-      let foundCompany = null;
-      let foundService = null;
-
-      // Поиск компании с нужным сервисом
-      for (const business of businesses) {
-        if (business.services && business.services.length > 0) {
-          const serviceItem = business.services.find(
-            service => service.id === selectedServiceId
-          );
-          if (serviceItem) {
-            foundCompany = business;
-            foundService = serviceItem;
-            break;
-          }
-        }
-      }
-
-      if (!foundCompany || !foundService) {
-        setFetchError('Сервис не найден');
-        return;
-      }
-
-      setCompanyData(foundCompany);
-      setSelectedService(foundService);
-    } catch (err) {
-      setFetchError(err.response?.data?.message || 'Ошибка при загрузке данных компании');
-    } finally {
-      setIsFetching(false);
-    }
-  }, [selectedServiceId, token, baseUrl]);
+  // Функция для вызова родительского обработчика с объектом параметров
+  const onService = (params) => {
+    service(params);
+  };
 
   useEffect(() => {
-    fetchCompanyData();
-  }, [fetchCompanyData]);
+    if (!companyId) return; // Если компания не выбрана, ничего не запрашиваем
 
-  // Обработка клика по карточке: обновляем как локальное состояние, так и вызываем onSelectItem
-  const handleItemClick = (index) => {
-    setSelectedItemIndex(index);
-    if (selectedService && selectedService.customParameters && selectedService.customParameters.items) {
-      const selectedItem = selectedService.customParameters.items[index];
-      onSelectItem(selectedItem);
+    const fetchServices = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const config = {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        };
+        const response = await axios.get(`${baseUrl}/services/${companyId}`, config);
+        setServices(response.data);
+      } catch (err) {
+        console.error(err);
+        setError('Ошибка при загрузке услуг');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+    // При смене компании сбрасываем раскрытие услуг
+    setExpandedServiceId(null);
+  }, [baseUrl, companyId]);
+
+  // Загрузка кастомной услуги из localStorage при монтировании
+  useEffect(() => {
+    const storedCustomService = localStorage.getItem('customService');
+    if (storedCustomService) {
+      setCustomService(storedCustomService);
     }
-  };
+  }, []);
 
-  const handleBack = () => {
-    setSelectedItemIndex(-1);
-    // При возврате можно сбросить selectedItem в родительском компоненте, если требуется:
-    onSelectItem(null);
-  };
-
-  if (isFetching)
-    return <div className="p-4">Загрузка данных компании...</div>;
-  if (fetchError || !companyData || !selectedService)
-    return <div className="p-4 text-red-600">{fetchError || 'Данные отсутствуют'}</div>;
-
-  // Если выбран конкретный элемент, отображаем аналитический дешборд
-  if (selectedItemIndex !== -1) {
-    return (
-      <div className="p-4">
-        <button onClick={handleBack} className="mb-4 text-blue-500 underline">
-          Назад к карточкам
-        </button>
-        <DashboardAnalytics
-          item={selectedService.customParameters.items[selectedItemIndex]}
-        />
-      </div>
+  const toggleService = (serviceId) => {
+    setExpandedServiceId((prevServiceId) =>
+      prevServiceId === serviceId ? null : serviceId
     );
-  }
+  };
+
+  const saveCustomService = () => {
+    if (customInput.trim() === '') return;
+    setCustomService(customInput);
+    localStorage.setItem('customService', customInput);
+    setCustomInput('');
+    setShowCustomInput(false);
+  };
 
   return (
-    <div className="p-4">
-      <div className="mt-8">
-        {selectedService.moduleType === 'MENU' ? (
-          <MenuCard
-            key={selectedService.id}
-            service={selectedService}
-            onItemClick={handleItemClick}
-          />
-        ) : selectedService.moduleType === 'BOOKING' ? (
-          <BookingCard
-            key={selectedService.id}
-            service={selectedService}
-            onItemClick={handleItemClick}
-          />
-        ) : (
-          <p>Неизвестный тип сервиса</p>
-        )}
-      </div>
+    <div className="mt-4">
+      {loading ? (
+        <p className="text-gray-600">Загрузка услуг...</p>
+      ) : error ? (
+        <p className="text-red-600 mb-4">{error}</p>
+      ) : services.length === 0 ? (
+        <p className="text-gray-600">Услуги не найдены.</p>
+      ) : (
+        <>
+          {services.map((serviceItem) => {
+            const items = serviceItem.customParameters?.items || [];
+            return (
+              <div key={serviceItem.id} className="mb-4 rounded-lg">
+                {/* Заголовок услуги */}
+                <button
+                  className={`flex text-gray-500 text-lg items-center justify-between w-full p-2 text-left hover:bg-gray-100 rounded-lg border-0 focus:outline-none ${
+                    lastClicked.serviceId === serviceItem.id && lastClicked.index === -1
+                      ? 'bg-blue-200'
+                      : ''
+                  }`}
+                  onClick={() => {
+                    toggleService(serviceItem.id);
+                    onService({ id: serviceItem.id, index: -1 });
+                    setLastClicked({ serviceId: serviceItem.id, index: -1 });
+                  }}
+                >
+                  <span className="font-medium">
+                    {serviceItem.customParameters.name || 'Без названия услуги'}
+                  </span>
+                  <img
+                    src={
+                      expandedServiceId === serviceItem.id
+                        ? '/ico/arDown.svg'
+                        : '/ico/arRight.svg'
+                    }
+                    alt={
+                      expandedServiceId === serviceItem.id
+                        ? 'Свернуть'
+                        : 'Развернуть'
+                    }
+                    className="w-4 h-4"
+                  />
+                </button>
+                {expandedServiceId === serviceItem.id && (
+                  <div className="pl-4 mt-2">
+                    {items.length === 0 ? (
+                      <p className="text-sm text-gray-700">Товары не найдены.</p>
+                    ) : (
+                      items.map((item, index) => (
+                        <div key={index} className="mb-2">
+                          <button
+                            className={`text-gray-500 text-lg hover:underline focus:outline-none ${
+                              lastClicked.serviceId === serviceItem.id && lastClicked.index === index
+                                ? 'bg-blue-200'
+                                : ''
+                            }`}
+                            onClick={() => {
+                              onService({ id: serviceItem.id, index });
+                              setLastClicked({ serviceId: serviceItem.id, index });
+                            }}
+                          >
+                            {item.name || 'Без названия'}
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </>
+      )}
     </div>
   );
-};
+}
 
-export default BusinessContent;
+export default RightSidebarServices;

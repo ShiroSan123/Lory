@@ -20,18 +20,15 @@ export const MainContent = memo(({
 	const [isSwiped, setIsSwiped] = useState(false);
 	const { theme } = useTheme(); // Получаем текущую тему
 
-	// Company states
 	const [companyData, setCompanyData] = useState(null);
 	const [updateError, setUpdateError] = useState('');
 	const [updateSuccess, setUpdateSuccess] = useState('');
 	const [isEditing, setIsEditing] = useState(false);
 
-	// Новые состояния для Business
 	const [companyDataFromApi, setCompanyDataFromApi] = useState(null);
 	const [fetchError, setFetchError] = useState('');
 	const [isFetching, setIsFetching] = useState(false);
 
-	// Registration states
 	const initialFormData = {
 		name: '',
 		description: '',
