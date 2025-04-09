@@ -8,7 +8,7 @@ const Dashboard = () => {
 	const [selectedMenu, setSelectedMenu] = useState('Главная');
 	const [selectedEmployee, setSelectedEmployee] = useState(null);
 	const [selectedCompany, setSelectedCompany] = useState(null); // New state for selected company
-	const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
+	const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
 	const [touchStart, setTouchStart] = useState(null);
 	const [touchMove, setTouchMove] = useState(null);
 
@@ -38,6 +38,13 @@ const Dashboard = () => {
 			setSelectedEmployee(null);
 		}
 		setIsLeftSidebarOpen(true);
+	};
+
+	const handleSelectCompany = (company) => {
+		console.log("Выбрана компания: " + company);
+		
+		setSelectedCompany(company);
+
 	};
 
 	// Touch event handlers remain unchanged
@@ -73,12 +80,14 @@ const Dashboard = () => {
 				onToggleLeftSidebar={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
 				selectedMenu={selectedMenu}
 				selectedEmployee={selectedEmployee}
+				onSelectMenu={handleSelectMenu}
 			/>
 			<RightSidebar
 				isOpen={!isLeftSidebarOpen}
 				onClose={() => setIsLeftSidebarOpen(true)}
 				menuItems={menuItems}
 				onSelectMenu={handleSelectMenu}
+				selectCompany={handleSelectCompany}
 			/>
 			<MainContent
 				selectedMenu={selectedMenu}

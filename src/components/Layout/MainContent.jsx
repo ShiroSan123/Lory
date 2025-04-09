@@ -1,19 +1,22 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+// MainContent.jsx
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import axios from 'axios';
 import ChatBot from '../../components/chatBot';
 import { useNavigate } from 'react-router-dom';
-import { memo } from 'react';
+import BusinessContent from './BusinessContent'; // Импорт нового компонента
+import Content from './Content';
 
 export const MainContent = memo(({
-	selectedMenu,
-	isLoading = false,
-	isSidebarOpen,
-	setIsSidebarOpen,
-	selectedEmployee
+  selectedMenu,
+  isLoading = false,
+  isSidebarOpen,
+  setIsSidebarOpen,
+  selectedEmployee,
+  selectedCompany
 }) => {
-	const mainRef = useRef(null);
-	const navigate = useNavigate();
-	const [isSwiped, setIsSwiped] = useState(false);
+  const mainRef = useRef(null);
+  const navigate = useNavigate();
+  const [isSwiped, setIsSwiped] = useState(false);
 
 	// Company states (были ранее)
 	const [companyData, setCompanyData] = useState(null);
@@ -478,18 +481,13 @@ export const MainContent = memo(({
 		setConfigError('');
 	}, []);
 
-	const handleUpdateCompany = useCallback(async (companyId) => {
-		try {
-			const response = await axios.put(
-				`${baseUrl}/companies/${companyId}`,
-				companyData,
-				{
-					headers: {
-						'Authorization': `Bearer ${token}`,
-						'Content-Type': 'application/json',
-					},
-				}
-			);
+  const handleUpdateCompany = useCallback(async (companyId) => {
+    try {
+      const response = await axios.put(
+        `${import.meta.env.VITE_API_BASE_URL}/companies/${companyId}`,
+        {}, // companyData – можно передать актуальные данные или использовать другой механизм
+        { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' } }
+      );
 
 			const savedCompanies = JSON.parse(localStorage.getItem('companies')) || [];
 			const updatedCompanies = savedCompanies.map(company =>
@@ -500,17 +498,16 @@ export const MainContent = memo(({
 			setUpdateSuccess('Данные компании успешно обновлены!');
 			setUpdateError('');
 			setTimeout(() => window.location.reload(), 1000);
-		} catch (err) {
-			setUpdateError('Произошла ошибка при обновлении данных. Попробуйте снова.');
-			setUpdateSuccess('');
-		}
-	}, [companyData, token, baseUrl]);
+    } catch (err) {
+      console.error('[handleUpdateCompany] Ошибка:', err.response?.data || err.message);
+    }
+  }, []);
 
-	const renderMainContent = () => {
-		switch (selectedMenu) {
-			case 'LoryAI':
-				return (
-					<ChatBot
+  const renderMainContent = () => {
+    switch (selectedMenu) {
+      case 'LoryAI':
+        return (
+          <ChatBot
 						onSubmitData={handleChatSubmit}
 						customBotMessage={getBotMessage()}
 						showButtons={showButtons}
@@ -518,8 +515,8 @@ export const MainContent = memo(({
 						onButtonClick={handleButtonClick}
 						isLoading={localLoading || isRegistering}
 						startRegistration={startRegistration}
-					>
-						{(addMessage) => (
+          >
+            {(addMessage) => (
 							<>
 								{isConfiguring && (
 									<div className="mt-4 p-4 bg-gray-100 rounded-lg">
@@ -597,9 +594,9 @@ export const MainContent = memo(({
 									</div>
 								)}
 							</>
-						)}
-					</ChatBot>
-				);
+            )}
+          </ChatBot>
+        );
 			case 'Сотрудники':
 				return (
 					<div className="p-4">
@@ -865,8 +862,8 @@ export const MainContent = memo(({
 						)}
 					</div>
 				);
-			case 'Business':
-				const companyId = selectedEmployee?.companyId;
+      case 'Business':
+				{ const companyId = selectedEmployee?.companyId;
 
 				// Функция для получения данных компании
 				const fetchCompanyData = useCallback(async () => {
@@ -959,7 +956,7 @@ export const MainContent = memo(({
 					return <div className="p-4">Данные компании отсутствуют</div>;
 				}
 
-				return (
+        return (
 					<div className="p-4">
 						<h1 className="text-xl font-bold mb-4">Компания: {companyDataFromApi.name}</h1>
 						{updateError && <p className="text-red-600 mb-4">{updateError}</p>}
@@ -1154,21 +1151,26 @@ export const MainContent = memo(({
 							</div>
 						)}
 					</div>
-				);
-			default:
-				return <div className="p-4">Выберите пункт меню</div>;
-		}
-	};
+        ); }
+      default:
+        return   <Content
+		token={localStorage.getItem('token')}
+		baseUrl={import.meta.env.VITE_API_BASE_URL}
+		selectedEmployee={selectedEmployee}
+		handleUpdateCompany={handleUpdateCompany}
+	  />;
+    }
+  };
 
-	return (
-		<main
-			ref={mainRef}
-			onClick={() => setIsSwiped(true)}
-			className={`md:fixed rounded-br-2xl bg-white pr-4 md:pt-2 md:px-6 md:left-0 w-screen md:w-[calc(100vw-17rem)] h-[calc(100vh-136px)] overflow-y-auto overflow-x-hidden transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-full' : '-translate-x-0'} ${!isSidebarOpen ? 'md:hidden' : 'md:block'} md:translate-x-0 z-10`}
-		>
-			{isLoading ? <div className="p-4">Loading...</div> : renderMainContent()}
-		</main>
-	);
+  return (
+    <main
+      ref={mainRef}
+      onClick={() => setIsSwiped(true)}
+      className={`md:fixed rounded-br-2xl bg-white pr-4 md:pt-2 md:px-6 md:left-0 w-screen md:w-[calc(100vw-17rem)] h-[calc(100vh-136px)] overflow-y-auto overflow-x-hidden transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-full' : '-translate-x-0'} ${!isSidebarOpen ? 'md:hidden' : 'md:block'} md:translate-x-0 z-10`}
+    >
+      {isLoading ? <div className="p-4">Loading...</div> : renderMainContent()}
+    </main>
+  );
 });
 
 export default MainContent;

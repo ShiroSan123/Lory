@@ -131,11 +131,11 @@ const Header = ({ onToggleLeftSidebar, selectedMenu, selectedEmployee }) => {
 		navigate("/");
 	};
 
-	const token = userData; // Получаем token из userData
+
 
 	return (
 		<header className="fixed bottom-0 left-0 right-0 h-30 flex md:gap-4 *:items-center justify-between md:justify-normal bg-white md:bg-inherit">
-			<div className="flex items-center space-x-4 md:pl-4 md:rounded-tr-2xl md:w-[calc(100vw-16rem)] bg-white">
+			<div className="flex items-center space-x-4 md:pl-4 md:rounded-tl-2xl и md:rounded-tr-2xl md:w-[calc(100vw)] bg-white">
 				<button className="p-2 rounded-full hover:bg-gray-200" aria-label="Settings">
 					<span>{selectedMenu}</span>
 				</button>
@@ -147,37 +147,6 @@ const Header = ({ onToggleLeftSidebar, selectedMenu, selectedEmployee }) => {
 						<span>Отмененные: {selectedEmployee.canceled}</span>
 						<span>Выручка: {selectedEmployee.revenue}</span>
 					</div>
-				)}
-			</div>
-			<div className="flex items-center space-x-4 md:w-64 md:pl-6 md:rounded-tl-2xl bg-white">
-				<button
-					className="md:hidden p-2 rounded-full hover:bg-gray-200"
-					onClick={onToggleLeftSidebar}
-					aria-label="Toggle left sidebar"
-				>
-					<span>☰</span>
-				</button>
-				{isLoading ? (
-					<p>Loading...</p>
-				) : error ? (
-					<p className="text-red-600">{error}</p>
-				) : token ? (
-					<div className="flex items-center gap-4">
-						{/* <a className="text-lg font-bold" href="/dashboard">
-							<p>{userData?.name || "User"}</p>
-						</a> */}
-						{/* <p className="text-sm">Token: {token}</p> Отображаем token */}
-						<button
-							onClick={handleLogout}
-							className="flex items-center p-2 gap-2 mb-2 rounded-lg hover:bg-gray-100 cursor-pointer w-full text-left text-red-600"
-						>
-							Выйти
-						</button>
-					</div>
-				) : (
-					<a className="text-lg font-bold" href="/BusinessRegPage">
-						Регистрация
-					</a>
 				)}
 			</div>
 		</header>
