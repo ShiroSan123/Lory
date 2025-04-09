@@ -49,17 +49,23 @@ const Dashboard = () => {
 	};
 
 	const handleTouchEnd = () => {
+		if (window.innerWidth > 768) return;
+	  
 		if (!touchStart || !touchMove) return;
+	  
 		const distance = touchMove - touchStart;
 		const minSwipeDistance = 50;
+	  
 		if (distance > minSwipeDistance) {
-			setIsLeftSidebarOpen(true);
+		  setIsLeftSidebarOpen(true);
 		} else if (distance < -minSwipeDistance) {
-			setIsLeftSidebarOpen(false);
+		  setIsLeftSidebarOpen(false);
 		}
+	  
 		setTouchStart(null);
 		setTouchMove(null);
-	};
+	  };
+	  
 
 	const handleSelectItem = useCallback((item) => {
 		setSelectedItem(item);
