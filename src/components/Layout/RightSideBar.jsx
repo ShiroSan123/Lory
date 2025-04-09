@@ -4,12 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import RightSidebarServices from './RightSidebarServices';
 import { useTheme } from '../../ThemeContext';
 
-function RightSidebar({ isOpen, onSelectMenu, selectedService, onClose }) {
+function RightSidebar({ isOpen, onSelectMenu, selectedService, onClose, onOpen }) { // Добавили onOpen
 	const { theme } = useTheme();
 	const [error, setError] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
 	const [companies, setCompanies] = useState([]);
 	const [selectedCompany, setSelectedCompany] = useState('');
+	const [touchStart, setTouchStart] = useState(null);
+	const [touchMove, setTouchMove] = useState(null);
 
 	const onSelectedService = (service) => {
 		console.log("service: ", service);
@@ -96,8 +98,31 @@ function RightSidebar({ isOpen, onSelectMenu, selectedService, onClose }) {
 		fetchCompanies();
 	}, []);
 
-	const handleSwipeRight = () => {
-		onClose();
+	// Обработчики свайпа
+	const handleTouchStart = (e) => {
+		setTouchStart(e.targetTouches[0].clientX);
+	};
+
+	const handleTouchMove = (e) => {
+		setTouchMove(e.targetTouches[0].clientX);
+	};
+
+	const handleTouchEnd = () => {
+		if (!touchStart || !touchMove) return;
+
+		const distance = touchMove - touchStart;
+		const minSwipeDistance = 50; // Минимальная дистанция для свайпа
+
+		if (distance > minSwipeDistance) {
+			// Свайп вправо: открываем панель
+			onOpen(); // Вызываем функцию открытия панели
+		} else if (distance < -minSwipeDistance) {
+			// Свайп влево: закрываем панель
+			onClose(); // Вызываем функцию закрытия панели
+		}
+
+		setTouchStart(null);
+		setTouchMove(null);
 	};
 
 	return (
@@ -106,6 +131,9 @@ function RightSidebar({ isOpen, onSelectMenu, selectedService, onClose }) {
 				} md:translate-x-0 md:top-0 flex flex-col ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'
 				}`}
 			aria-label="Боковая панель"
+			onTouchStart={handleTouchStart}
+			onTouchMove={handleTouchMove}
+			onTouchEnd={handleTouchEnd}
 		>
 			<div className="flex-1 overflow-y-auto p-4">
 				<img src="/logoMain.png" alt="" className="mb-5" />
@@ -186,7 +214,6 @@ function RightSidebar({ isOpen, onSelectMenu, selectedService, onClose }) {
 					</div>
 					<button
 						onClick={() => {
-							handleSwipeRight();
 							handleLogout();
 						}}
 						className={`flex items-center p-2 gap-2 mb-2 rounded-lg cursor-pointer w-full text-left text-red-600 ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'

@@ -88,7 +88,7 @@ const Header = ({
 		<>
 			{isExpanded && (
 				<div
-					className="fixed inset-0 bg-black bg-opacity-50 z-30 transition-opacity duration-300"
+					className="fixed inset-0 bg-black/20 z-30 transition-opacity duration-300"
 					onClick={() => {
 						setHeaderHeight(120);
 						setIsExpanded(false);

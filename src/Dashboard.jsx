@@ -32,7 +32,7 @@ const Dashboard = () => {
 			setSelectedEmployee(null);
 		}
 		setIsLeftSidebarOpen(true);
-	};
+	}
 
 	const handleSelectService = (service) => {
 		console.log('Selected Сервис in Dashboard:', service);
