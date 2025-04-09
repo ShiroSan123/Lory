@@ -2,6 +2,14 @@ import { useState } from 'react';
 
 const MenuCard = ({ service, onItemClick }) => {
   const { customParameters } = service;
+  const localStorageKey = 'menuItems';
+
+  // Если в localStorage есть данные, используем их, иначе — исходные данные
+  const [items, setItems] = useState(() => {
+    const saved = localStorage.getItem(localStorageKey);
+    return saved ? JSON.parse(saved) : customParameters.items;
+  });
+  
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -12,15 +20,13 @@ const MenuCard = ({ service, onItemClick }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewProduct(prev => ({ ...prev, [name]: value }));
+    setNewProduct((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleAddProduct = () => {
-    // Здесь можно вызвать функцию для обработки добавления нового товара
-    console.log("Добавлен новый товар:", newProduct);
-    // Например, можно вызывать переданный callback или обновлять состояние родительского компонента
-
-    // Сброс формы и закрытие формы добавления
+    const updatedItems = [...items, newProduct]; // добавляем новый элемент в конец массива
+    setItems(updatedItems);
+    localStorage.setItem(localStorageKey, JSON.stringify(updatedItems));
     setNewProduct({ name: '', description: '', price: '', image: '' });
     setShowAddProduct(false);
   };
@@ -29,7 +35,7 @@ const MenuCard = ({ service, onItemClick }) => {
     <div>
       <h2 className="text-xl font-bold my-4">{customParameters.name}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {customParameters.items.map((item, index) => (
+        {items.map((item, index) => (
           <div
             key={index}
             className="border rounded-lg p-4 shadow-md cursor-pointer"
