@@ -50,17 +50,15 @@ const Dashboard = () => {
 
 	const handleTouchEnd = () => {
 		if (window.innerWidth > 768) return;
-
 		if (!touchStart || !touchMove) return;
 
 		const distance = touchMove - touchStart;
 		const minSwipeDistance = 50;
 
-		// Измененная логика: свайп влево открывает, свайп вправо закрывает
 		if (distance < -minSwipeDistance) {
-			setIsLeftSidebarOpen(true); // Свайп влево (distance отрицательное)
+			setIsLeftSidebarOpen(true);
 		} else if (distance > minSwipeDistance) {
-			setIsLeftSidebarOpen(false); // Свайп вправо (distance положительное)
+			setIsLeftSidebarOpen(false);
 		}
 
 		setTouchStart(null);
@@ -92,9 +90,11 @@ const Dashboard = () => {
 				/>
 				<RightSidebar
 					isOpen={isLeftSidebarOpen}
-					onClose={() => setIsLeftSidebarOpen(false)}
+					onClose={() => setIsLeftSidebarOpen(false)} // Функция закрытия панели
 					onSelectMenu={handleSelectMenu}
 					selectedService={handleSelectService}
+					baseUrl="your-base-url" // Укажите ваш baseUrl
+					companyId={selectedCompany?.id} // Передайте companyId, если есть
 				/>
 				<MainContent
 					selectedMenu={selectedMenu}
