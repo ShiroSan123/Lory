@@ -886,7 +886,7 @@ export const MainContent = memo(({
 				{
 					const selectedServiceId = selectedService.serviceId;
 					const index = selectedService.index;
-					console.log("menu2: ", selectedService);
+					console.log("menu3: ", selectedService);
 					return (
 						<BusinessContent
 							token={localStorage.getItem("token")}

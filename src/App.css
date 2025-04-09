@@ -14,9 +14,6 @@ body {
 		transform: translateX(0);
 	}
 
-	main {
-		transform: translateX(-100%);
-	}
 
 	/* Когда MainContent открыт */
 	.open main {
