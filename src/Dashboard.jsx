@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import RightSidebar from './components/Layout/RightSideBar';
 import MainContent from './components/Layout/MainContent';
 import Header from './components/Layout/Header';
-import { ThemeProvider } from './ThemeContext'; // Импортируем провайдер темы
+import { ThemeProvider } from './ThemeContext';
 import './App.css';
 
 const Dashboard = () => {
@@ -32,7 +32,7 @@ const Dashboard = () => {
 			setSelectedEmployee(null);
 		}
 		setIsLeftSidebarOpen(true);
-	}
+	};
 
 	const handleSelectService = (service) => {
 		console.log('Selected Сервис in Dashboard:', service);
@@ -50,22 +50,22 @@ const Dashboard = () => {
 
 	const handleTouchEnd = () => {
 		if (window.innerWidth > 768) return;
-	  
+
 		if (!touchStart || !touchMove) return;
-	  
+
 		const distance = touchMove - touchStart;
 		const minSwipeDistance = 50;
-	  
-		if (distance > minSwipeDistance) {
-		  setIsLeftSidebarOpen(true);
-		} else if (distance < -minSwipeDistance) {
-		  setIsLeftSidebarOpen(false);
+
+		// Измененная логика: свайп влево открывает, свайп вправо закрывает
+		if (distance < -minSwipeDistance) {
+			setIsLeftSidebarOpen(true); // Свайп влево (distance отрицательное)
+		} else if (distance > minSwipeDistance) {
+			setIsLeftSidebarOpen(false); // Свайп вправо (distance положительное)
 		}
-	  
+
 		setTouchStart(null);
 		setTouchMove(null);
-	  };
-	  
+	};
 
 	const handleSelectItem = useCallback((item) => {
 		setSelectedItem(item);

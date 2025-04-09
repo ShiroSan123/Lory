@@ -223,7 +223,7 @@ const Header = ({
 
         @keyframes glowLightAnimation {
           0% {
-            text-shadow: 0 0 5px rgba(0, 0, 255, 0.7), 
+            text-shadow: 0 0 0px rgba(0, 0, 255, 0.7), 
                         0 0 10px rgba(0, 0, 255, 0.5);
           }
           100% {
@@ -235,7 +235,7 @@ const Header = ({
 
         @keyframes glowDarkAnimation {
           0% {
-            text-shadow: 0 0 5px rgba(0, 191, 255, 0.7), 
+            text-shadow: 0 0 0px rgba(0, 191, 255, 0.7), 
                         0 0 10px rgba(0, 191, 255, 0.5);
           }
           100% {
