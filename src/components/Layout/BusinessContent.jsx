@@ -69,10 +69,6 @@ const BusinessContent = ({ token, baseUrl, selectedServiceId, onSelectItem, inde
 
   const handleItemClick = (index) => {
     const itemsArray = selectedService?.customParameters?.items;
-    if (!itemsArray || itemsArray.length <= index) {
-      console.warn('Нет доступных айтемов или выбран неверный индекс');
-      return;
-    }
     setSelectedItemIndex(index);
     const selectedItem = itemsArray[index];
     onSelectItem(selectedItem);
@@ -91,9 +87,6 @@ const BusinessContent = ({ token, baseUrl, selectedServiceId, onSelectItem, inde
   // Если выбран конкретный элемент, отображаем аналитический дешборд
   if (selectedItemIndex !== -1) {
     const itemsArray = selectedService.customParameters?.items;
-    if (!itemsArray || itemsArray.length <= selectedItemIndex) {
-      return <div className="p-4 text-red-600">Нет доступных айтемов для отображения</div>;
-    }
     return (
       <div className="p-4">
         <button onClick={handleBack} className="mb-4 text-blue-500 underline">
