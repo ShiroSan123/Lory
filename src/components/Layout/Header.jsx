@@ -88,7 +88,7 @@ const Header = ({
 		<>
 			{isExpanded && (
 				<div
-					className="fixed inset-0 bg-black bg-opacity-50 z-10 transition-opacity duration-300"
+					className="fixed inset-0 bg-black bg-opacity-50 z-30 transition-opacity duration-300"
 					onClick={() => {
 						setHeaderHeight(120);
 						setIsExpanded(false);
@@ -97,7 +97,7 @@ const Header = ({
 			)}
 
 			<header
-				className={`fixed bottom-0 left-0 right-0 flex md:gap-4 items-start justify-between shadow-md z-20 ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'
+				className={`fixed bottom-0 left-0 right-0 flex md:gap-4 items-start justify-between shadow-md z-40 ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'
 					}`}
 				style={{
 					height: `${headerHeight}px`,
