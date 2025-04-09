@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { HiChevronLeft, HiChevronRight } from 'react-icons/hi'; // Стрелки для навигации
+import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
+import { useTheme } from '../../ThemeContext'; // Импортируем useTheme
 
 const Reviews = () => {
-	// Массив отзывов (для примера)
+	const { theme } = useTheme(); // Получаем текущую тему
+
 	const reviews = [
 		{
 			name: "Айаал Григорьев",
@@ -21,10 +23,8 @@ const Reviews = () => {
 		},
 	];
 
-	// Состояние для текущего отзыва
 	const [currentReview, setCurrentReview] = useState(0);
 
-	// Функции для переключения отзывов
 	const handlePrev = () => {
 		setCurrentReview((prev) => (prev === 0 ? reviews.length - 1 : prev - 1));
 	};
@@ -35,38 +35,60 @@ const Reviews = () => {
 
 	return (
 		<div
-			className="py-16 px-4 sm:px-6 lg:px-8 bg-cover bg-center"
+			className={`py-16 px-4 sm:px-6 lg:px-8 bg-cover bg-center ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-black'
+				}`}
 			style={{
 				backgroundImage: `url('https://via.placeholder.com/1200x600')`, // Замените на реальное изображение
 			}}
 		>
 			{/* Заголовок */}
-			<h2 className="text-3xl md:text-4xl font-bold text-gray-900 text-center mb-12">
+			<h2
+				className={`text-3xl md:text-4xl font-bold text-center mb-12 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+					}`}
+			>
 				ОТЗЫВЫ
 			</h2>
 
 			{/* Контейнер отзыва */}
-			<div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
-				<h3 className="text-xl font-semibold text-gray-900 mb-2">
+			<div
+				className={`max-w-2xl mx-auto rounded-lg shadow-lg p-8 ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'
+					}`}
+			>
+				<h3
+					className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+						}`}
+				>
 					{reviews[currentReview].name}
 				</h3>
-				<p className="text-sm text-gray-500 mb-4">{reviews[currentReview].title}</p>
-				<p className="text-gray-600">{reviews[currentReview].text}</p>
+				<p
+					className={`text-sm mb-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+						}`}
+				>
+					{reviews[currentReview].title}
+				</p>
+				<p
+					className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+						}`}
+				>
+					{reviews[currentReview].text}
+				</p>
 			</div>
 
 			{/* Навигация */}
 			<div className="flex justify-center mt-6 space-x-4">
 				<button
 					onClick={handlePrev}
-					className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
+					className={`p-2 rounded-full shadow-md transition ${theme === 'dark' ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' : 'bg-white text-gray-600 hover:bg-gray-100'
+						}`}
 				>
-					<HiChevronLeft className="text-2xl text-gray-600" />
+					<HiChevronLeft className="text-2xl" />
 				</button>
 				<button
 					onClick={handleNext}
-					className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
+					className={`p-2 rounded-full shadow-md transition ${theme === 'dark' ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' : 'bg-white text-gray-600 hover:bg-gray-100'
+						}`}
 				>
-					<HiChevronRight className="text-2xl text-gray-600" />
+					<HiChevronRight className="text-2xl" />
 				</button>
 			</div>
 		</div>

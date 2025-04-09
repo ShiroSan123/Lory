@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'; // Убраны дубликаты импортов
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './index.css';
 import { TelegramProvider } from './context/TelegramContext';
+import { ThemeProvider } from './ThemeContext'; // Импортируем ThemeProvider
 import ProtectedRoute from './server/ProtectedRoute';
 
 // Pages
@@ -11,20 +12,6 @@ import RegUser from './RegUser';
 import LoginUser from './LoginUser';
 import Gallery from './Gallery';
 import TelegramProfile from './TelegramProfile';
-
-// function App() {
-// 	const [count, setCount] = useState<number>(0); // Тип для count
-
-// 	return (
-// 		<BrowserRouter>
-// 			<Routes>
-// 				<Route path="/" element={<HomePage />} />
-// 				<Route path="/Dashboard" element={<Dashboard />} />
-// 				<Route path="/BusinessRegPage" element={<BusinessRegPage />} />
-// 			</Routes>
-// 		</BrowserRouter>
-// 	);
-// }
 
 // Интерфейс для пользователя Telegram
 interface TelegramUser {
@@ -50,19 +37,21 @@ interface InitDataUnsafe {
 
 function App() {
 	return (
-		<TelegramProvider>
-			<BrowserRouter>
-				<Routes>
-					<Route path="/" element={<HomePage />} />
-					<Route path="/Dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-					<Route path="/BusinessRegPage" element={<BusinessRegPage />} />
-					{/* <Route path="/RegUser" element={<RegUser />} /> */}
-					<Route path="/Gallery" element={<Gallery />} />
-					<Route path="/TelegramProfile" element={<TelegramProfile />} />
-					<Route path="/LoginUser" element={<LoginUser />} />
-				</Routes>
-			</BrowserRouter>
-		</TelegramProvider>
+		<ThemeProvider> {/* Оборачиваем всё приложение в ThemeProvider */}
+			<TelegramProvider>
+				<BrowserRouter>
+					<Routes>
+						<Route path="/" element={<HomePage />} />
+						<Route path="/Dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+						<Route path="/BusinessRegPage" element={<BusinessRegPage />} />
+						{/* <Route path="/RegUser" element={<RegUser />} /> */}
+						<Route path="/Gallery" element={<Gallery />} />
+						<Route path="/TelegramProfile" element={<TelegramProfile />} />
+						<Route path="/LoginUser" element={<LoginUser />} />
+					</Routes>
+				</BrowserRouter>
+			</TelegramProvider>
+		</ThemeProvider>
 	);
 }
 

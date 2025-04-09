@@ -1,20 +1,19 @@
 import { useEffect, useState } from "react";
 import { HiCheckCircle, HiChatAlt, HiMail, HiDocument, HiPhone, HiCog, HiChartPie, HiCalendar, HiBell, HiCheck, HiPhotograph, HiOfficeBuilding, HiClipboard } from 'react-icons/hi';
+import { useTheme } from '../../ThemeContext';
 
 const WhyWee = () => {
+	const { theme } = useTheme();
 	const [scrollY, setScrollY] = useState(0);
 
-	// Отслеживаем прокрутку для первой секции
 	useEffect(() => {
 		const handleScroll = () => {
 			setScrollY(window.scrollY);
 		};
-
 		window.addEventListener("scroll", handleScroll);
 		return () => window.removeEventListener("scroll", handleScroll);
 	}, []);
 
-	// Функция для расчета трансформации иконок с дугой (для первой секции)
 	const getIconTransform = (isLeft) => {
 		const offsetX = scrollY * 0.5;
 		const offsetY = Math.sin(offsetX / 100) * 50;
@@ -24,86 +23,171 @@ const WhyWee = () => {
 	};
 
 	return (
-		<div className="bg-gray-50" id="WhyWe">
-			{/* Вторая секция (статическая, без эффекта ухода) */}
+		<div className={`bg-gray-50 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-black'}`} id="WhyWe">
 			<div className="py-16 px-4 sm:px-6 lg:px-8">
-				{/* Заголовок */}
-				<h2 className="text-3xl md:text-4xl font-bold text-gray-900 text-center mb-16">
+				<h2
+					className={`text-3xl md:text-4xl font-bold text-center mb-16 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+						}`}
+				>
 					Тысячи процессов единая платформа
 				</h2>
 
-				{/* Сетка иконок */}
 				<div className="grid grid-cols-2 md:grid-cols-4 gap-4 pr-4 max-w-5xl mx-auto mb-16 *:text-center *:items-center *:grid *:grid-cols-2">
-					<div className="">
-						<HiCalendar className="text-4xl text-gray-600 mb-4 m-auto" />
-						<p className="text-gray-600 text-sm md:text-base">Календарь бронирования</p>
+					<div>
+						<HiCalendar
+							className={`text-4xl mb-4 m-auto ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+								}`}
+						/>
+						<p
+							className={`text-sm md:text-base ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+								}`}
+						>
+							Календарь бронирования
+						</p>
 					</div>
-					<div className="">
-						<HiChartPie className="text-4xl text-gray-600 mb-4 m-auto" /> {/* Исправлено на HiChartPie */}
-						<p className="text-gray-600 text-sm md:text-base">Точная аналитика</p>
+					<div>
+						<HiChartPie
+							className={`text-4xl mb-4 m-auto ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+								}`}
+						/>
+						<p
+							className={`text-sm md:text-base ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+								}`}
+						>
+							Точная аналитика
+						</p>
 					</div>
-					<div className="">
-						<HiBell className="text-4xl text-gray-600 mb-4 m-auto" />
-						<p className="text-gray-600 text-sm md:text-base">Уведомление в боте</p>
+					<div>
+						<HiBell
+							className={`text-4xl mb-4 m-auto ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+								}`}
+						/>
+						<p
+							className={`text-sm md:text-base ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+								}`}
+						>
+							Уведомление в боте
+						</p>
 					</div>
-					<div className="">
-						<HiCheck className="text-4xl text-gray-600 mb-4 m-auto" />
-						<p className="text-gray-600 text-sm md:text-base">Подтвержение в боте</p>
+					<div>
+						<HiCheck
+							className={`text-4xl mb-4 m-auto ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+								}`}
+						/>
+						<p
+							className={`text-sm md:text-base ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+								}`}
+						>
+							Подтвержение в боте
+						</p>
 					</div>
-					<div className="">
-						<HiPhotograph className="text-4xl text-gray-600 mb-4 m-auto" />
-						<p className="text-gray-600 text-sm md:text-base">Галерея изображений</p>
+					<div>
+						<HiPhotograph
+							className={`text-4xl mb-4 m-auto ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+								}`}
+						/>
+						<p
+							className={`text-sm md:text-base ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+								}`}
+						>
+							Галерея изображений
+						</p>
 					</div>
-					<div className="">
-						<HiOfficeBuilding className="text-4xl text-gray-600 mb-4 m-auto" />
-						<p className="text-gray-600 text-sm md:text-base">Конструктор функций</p>
+					<div>
+						<HiOfficeBuilding
+							className={`text-4xl mb-4 m-auto ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+								}`}
+						/>
+						<p
+							className={`text-sm md:text-base ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+								}`}
+						>
+							Конструктор функций
+						</p>
 					</div>
-					<div className="">
-						<HiDocument className="text-4xl text-gray-600 mb-4 m-auto" /> {/* Исправлено на HiDocument */}
-						<p className="text-gray-600 text-sm md:text-base">Управление задачами</p>
+					<div>
+						<HiDocument
+							className={`text-4xl mb-4 m-auto ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+								}`}
+						/>
+						<p
+							className={`text-sm md:text-base ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+								}`}
+						>
+							Управление задачами
+						</p>
 					</div>
-					<div className="">
-						<HiClipboard className="text-4xl text-gray-600 mb-4 m-auto" />
-						<p className="text-gray-600 text-sm md:text-base">Управление процессами</p>
+					<div>
+						<HiClipboard
+							className={`text-4xl mb-4 m-auto ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+								}`}
+						/>
+						<p
+							className={`text-sm md:text-base ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+								}`}
+						>
+							Управление процессами
+						</p>
 					</div>
 				</div>
 
-				{/* Второй заголовок */}
-				<h2 className="text-4xl md:text-4xl font-bold text-gray-900 text-center mb-12">
+				<h2
+					className={`text-4xl md:text-4xl font-bold text-center mb-12 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+						}`}
+				>
 					Подходит для любого бизнеса{" "}
 					<span className="text-[#0754B1]">в любой сфере</span>
 				</h2>
 
-				{/* Изображение */}
 				<div className="flex justify-center mb-12">
 					<img
-						src="https://via.placeholder.com/600x400" // Замените на реальное изображение
+						src="https://via.placeholder.com/600x400"
 						alt="Человек в офисе"
-						className="rounded-lg shadow-lg max-w-full h-auto"
+						className={`rounded-lg shadow-lg max-w-full h-auto ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+							}`}
 					/>
 				</div>
 
-				{/* Сетка текстовых блоков */}
 				<div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto mb-12 *:text-left px-4">
-					<div className="">
-						<h3 className="text-sm font-semibold text-gray-900">Салоны красоты</h3>
+					<div>
+						<h3
+							className={`text-sm font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'
+								}`}
+						>
+							Салоны красоты
+						</h3>
 					</div>
-					<div className="">
-						<h3 className="text-sm font-semibold text-gray-900">Рестораны</h3>
+					<div>
+						<h3
+							className={`text-sm font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'
+								}`}
+						>
+							Рестораны
+						</h3>
 					</div>
-					<div className="">
-						<h3 className="text-sm font-semibold text-gray-900">Барбершоп</h3>
+					<div>
+						<h3
+							className={`text-sm font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'
+								}`}
+						>
+							Барбершоп
+						</h3>
 					</div>
-					<div className="">
-						<h3 className="text-sm font-semibold text-gray-900">Аренда квартир</h3>
+					<div>
+						<h3
+							className={`text-sm font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'
+								}`}
+						>
+							Аренда квартир
+						</h3>
 					</div>
 				</div>
 
-				{/* Ссылка */}
 				<div className="text-center">
 					<a
 						href="#"
-						className="underline text-xs md:text-base"
+						className={`underline text-xs md:text-base ${theme === 'dark' ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-700'
+							}`}
 					>
 						Посмотреть все типы бизнеса
 					</a>
