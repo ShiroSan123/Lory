@@ -1,109 +1,207 @@
 import { useState, useEffect } from 'react';
-import axiosInstance from '../../scripts/axiosInstance';
+import axios from 'axios';
 
-function RightSidebarServices({ baseUrl, companyId, service: onSelectedService }) {
+function RightSidebarServices({ baseUrl, companyId, service }) {
   const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [expandedServiceId, setExpandedServiceId] = useState(null);
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customInput, setCustomInput] = useState('');
+  const [lastClicked, setLastClicked] = useState({ serviceId: null, index: null });
 
-  // Флаг для показа формы создания нового сервиса
-  const [isCreatingService, setIsCreatingService] = useState(false);
+  const onService = (params) => {
+    service(params);
+  };
 
   useEffect(() => {
+    if (!companyId) return;
+
     const fetchServices = async () => {
-      setIsLoading(true);
+      setLoading(true);
       setError('');
       try {
-        const response = await axiosInstance.get(`${baseUrl}/services?companyId=${companyId}`);
-        // Если сервисов нет, response.data может быть пустым массивом
-        setServices(response.data || []);
+        const config = {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        };
+        const response = await axios.get(`${baseUrl}/services/${companyId}`, config);
+        setServices(response.data);
       } catch (err) {
-        setError('Ошибка загрузки сервисов');
+        console.error(err);
+        setError('Ошибка при загрузке услуг');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
     fetchServices();
+    setExpandedServiceId(null);
   }, [baseUrl, companyId]);
 
-  // Обработчик для начала создания нового сервиса
-  const handleCreateService = () => {
-    setIsCreatingService(true);
+  const toggleService = (serviceId) => {
+    setExpandedServiceId(prevServiceId =>
+      prevServiceId === serviceId ? null : serviceId
+    );
   };
 
-  // Функция для обработки завершения создания сервиса
-  // (например, можно добавить новый сервис в список)
-  const handleServiceCreated = (newService) => {
-    setServices(prev => [newService, ...prev]);
-    setIsCreatingService(false);
-    // Можно также вызывать onSelectedService(newService), если нужно сразу выбрать новый сервис
-    onSelectedService(newService);
+  const saveCustomService = async () => {
+    if (customInput.trim() === '') return;
+    try {
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      };
+      const payload = {
+        moduleType: "MENU",
+        customParameters: {
+          displayType: "list",
+          name: customInput,
+          items: []
+        }
+      };
+      const response = await axios.post(`${baseUrl}/services/${companyId}`, payload, config);
+      setServices(prevServices => [...prevServices, response.data]);
+      setCustomInput('');
+      setShowCustomInput(false);
+    } catch (err) {
+      console.error(err);
+      setError('Ошибка при создании новой услуги');
+    }
   };
 
   return (
-    <div>
-      <h3 className="text-xl font-semibold mb-4">Сервисы</h3>
-
-      {isLoading && <p>Загрузка сервисов...</p>}
-      {error && <p className="text-red-600">{error}</p>}
-
-      {/* Отображаем существующие сервисы, если они есть */}
-      {services.length > 0 ? (
-        services.map(service => (
-          <div key={service.id} className="p-2 border-b flex justify-between items-center">
-            <span>{service.name}</span>
-            <button 
-              onClick={() => onSelectedService(service)} 
-              className="text-blue-600 hover:underline"
-            >
-              Выбрать
-            </button>
-          </div>
-        ))
-      ) : (
-        // Сообщение, если сервисов нет
-        <p>Сервисы не найдены.</p>
+    <div className="mt-4">
+      {loading && (
+        <p className="text-gray-600">Загрузка услуг...</p>
+      )}
+      {error && (
+        <p className="text-red-600 mb-4">{error}</p>
       )}
 
-      {/* Кнопка для создания нового сервиса доступна всегда */}
-      <button 
-        onClick={handleCreateService} 
-        className="mt-4 p-2 rounded-lg bg-green-600 text-white w-full hover:bg-green-700"
-      >
-        Создать новый сервис
-      </button>
+      {services.length > 0 ? (
+        services.map((serviceItem) => {
+          // Если в customParameters.moduleType указано "MENU", используем префикс "menuItems",
+          // иначе (например, для бронирования) используем "bookingItems". Это позволит формировать уникальный ключ.
+          const moduleType = serviceItem.customParameters?.moduleType;
+          const keyPrefix = moduleType === "MENU" ? "menuItems" : "bookingItems";
+          console.log("test228");
+          
+          console.log(serviceItem)
+          const localStorageKey = `menuItems_${serviceItem.id}`;
 
-      {/* Здесь можно отобразить форму создания сервиса,
-          если isCreatingService === true */}
-      {isCreatingService && (
-        <div className="mt-4 p-4 border rounded-lg">
-          <h4 className="text-lg font-medium mb-2">Новый сервис</h4>
-          {/* Пример формы. Логика отправки может быть вашей */}
-          <form 
-            onSubmit={(e) => {
-              e.preventDefault();
-              // Заглушка – создаём фиктивный сервис
-              const newService = {
-                id: Date.now(),
-                name: e.target.elements.name.value,
-              };
-              handleServiceCreated(newService);
-            }}
-          >
+          // Пытаемся получить сохранённые айтемы для данного сервиса из localStorage
+          let itemsFromLocal = [];
+          try {
+            const stored = localStorage.getItem(localStorageKey);
+            if (stored) {
+              itemsFromLocal = JSON.parse(stored);
+            }
+          } catch (error) {
+            console.error("Ошибка чтения localStorage для ключа", localStorageKey, error);
+          }
+          const items = (itemsFromLocal && itemsFromLocal.length > 0)
+            ? itemsFromLocal
+            : (serviceItem.customParameters?.items || []);
+
+          return (
+            <div key={serviceItem.id} className="mb-4 rounded-lg">
+              <button
+                className={`flex text-gray-500 text-lg items-center justify-between w-full p-2 text-left hover:bg-gray-100 rounded-lg border-0 focus:outline-none ${
+                  lastClicked.serviceId === serviceItem.id && lastClicked.index === -1
+                    ? 'bg-blue-200'
+                    : ''
+                }`}
+                onClick={() => {
+                  toggleService(serviceItem.id);
+                  onService({ id: serviceItem.id, index: -1 });
+                  setLastClicked({ serviceId: serviceItem.id, index: -1 });
+                }}
+              >
+                <span className="font-medium">
+                  {serviceItem.customParameters.name || 'Без названия услуги'}
+                </span>
+                <img
+                  src={
+                    expandedServiceId === serviceItem.id
+                      ? '/ico/arDown.svg'
+                      : '/ico/arRight.svg'
+                  }
+                  alt={
+                    expandedServiceId === serviceItem.id
+                      ? 'Свернуть'
+                      : 'Развернуть'
+                  }
+                  className="w-4 h-4"
+                />
+              </button>
+              {expandedServiceId === serviceItem.id && (
+                <div className="pl-4 mt-2">
+                  {items.length === 0 ? (
+                    <p className="text-sm text-gray-700">Товары не найдены.</p>
+                  ) : (
+                    items.map((item, index) => (
+                      <div key={index} className="mb-2">
+                        <button
+                          className={`text-gray-500 text-lg hover:underline focus:outline-none ${
+                            lastClicked.serviceId === serviceItem.id && lastClicked.index === index
+                              ? 'bg-blue-200'
+                              : ''
+                          }`}
+                          onClick={() => {
+                            onService({ id: serviceItem.id, index });
+                            setLastClicked({ serviceId: serviceItem.id, index });
+                          }}
+                        >
+                          {item.name || 'Без названия'}
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })
+      ) : (
+        <p className="text-gray-600">Услуги не найдены.</p>
+      )}
+
+      {/* Блок создания новой услуги всегда отображается */}
+      <div className="mb-4 rounded-lg">
+        <button
+          className={`flex text-gray-500 text-lg items-center justify-between w-full p-2 text-left hover:bg-gray-100 rounded-lg border-0 bg-blue-200 focus:outline-none ${
+            lastClicked.serviceId === 'custom' ? 'bg-blue-200' : ''
+          }`}
+          onClick={() => {
+            setShowCustomInput((prev) => !prev);
+            setLastClicked({ serviceId: 'custom', index: null });
+          }}
+        >
+          <span className="font-medium">+ Создать услугу</span>
+        </button>
+        {showCustomInput && (
+          <div className="pl-4 mt-2">
             <input
               type="text"
-              name="name"
-              placeholder="Название сервиса"
-              className="p-2 border rounded w-full mb-2"
-              required
+              value={customInput}
+              onChange={(e) => setCustomInput(e.target.value)}
+              placeholder="Введите название услуги"
+              className="border p-2 rounded flex-1"
             />
-            <button type="submit" className="p-2 rounded bg-blue-600 text-white w-full hover:bg-blue-700">
+            <button
+              onClick={saveCustomService}
+              className="ml-2 text-blue-500 hover:underline"
+            >
               Сохранить
             </button>
-          </form>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

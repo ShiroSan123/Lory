@@ -28,9 +28,6 @@ ChartJS.register(
 );
 
 const Dashboard = ({ item }) => {
-  // Пример данных для графиков (их можно заменить или генерировать динамически)
-  
-  // Линейный график: тренды посещаемости за 4 недели
   const visitorTrendsData = {
     labels: ["Неделя 1", "Неделя 2", "Неделя 3", "Неделя 4"],
     datasets: [
@@ -43,8 +40,6 @@ const Dashboard = ({ item }) => {
       },
     ],
   };
-
-  // Столбчатый график: месячная выручка за 6 месяцев
   const monthlyRevenueData = {
     labels: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь"],
     datasets: [
@@ -55,8 +50,6 @@ const Dashboard = ({ item }) => {
       },
     ],
   };
-
-  // Круговая диаграмма: распределение продаж по продуктам
   const salesDistributionData = {
     labels: ["Продукт A", "Продукт B", "Продукт C"],
     datasets: [
@@ -66,8 +59,6 @@ const Dashboard = ({ item }) => {
       },
     ],
   };
-
-  // Общие опции для графиков
   const chartOptions = {
     responsive: true,
     plugins: {
@@ -80,7 +71,6 @@ const Dashboard = ({ item }) => {
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">Дешборд аналитики</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Линейный график: тренды посещаемости */}
         <div className="bg-white rounded shadow p-4">
           <h3 className="text-xl font-semibold mb-2">Тренды посещаемости</h3>
           <Line
@@ -97,12 +87,10 @@ const Dashboard = ({ item }) => {
             }}
           />
         </div>
-        {/* Столбчатый график: месячная выручка */}
         <div className="bg-white rounded shadow p-4">
           <h3 className="text-xl font-semibold mb-2">Месячная выручка</h3>
           <Bar data={monthlyRevenueData} options={chartOptions} />
         </div>
-        {/* Круговая диаграмма: распределение продаж */}
         <div className="bg-white rounded shadow p-4">
           <h3 className="text-xl font-semibold mb-2">Распределение продаж</h3>
           <Pie

@@ -1,12 +1,13 @@
 import { useState } from 'react';
 
 const MenuCard = ({ service, onItemClick }) => {
-  const { customParameters } = service;
-  const localStorageKey = 'menuItems';
-
-  // Если в localStorage есть данные, используем их, иначе — исходные данные
+  const {customParameters }  = service;
+  // Формируем уникальный ключ, используя идентификатор сервиса. 
+  // Если customParameters.id отсутствует, можно использовать другое уникальное свойство, например customParameters.name.
+  const localStorageKey = `menuItems_${service.id}`;
+  console.log(customParameters)
   const [items, setItems] = useState(() => {
-    const saved = localStorage.getItem(localStorageKey);
+    const saved = localStorage.getItem(`menuItems_${service.id}`);
     return saved ? JSON.parse(saved) : customParameters.items;
   });
   

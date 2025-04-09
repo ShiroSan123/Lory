@@ -2,7 +2,9 @@ import { useState } from 'react';
 
 const BookingCard = ({ service, onItemClick }) => {
   const { customParameters } = service;
-  const localStorageKey = 'bookingItems';
+  // Формируем уникальный ключ, используя customParameters.id.
+  // Если id отсутствует, можно использовать, например, customParameters.name.
+  const localStorageKey = `bookingItems_${customParameters.id}`;
 
   // Инициализация данных из localStorage или исходных параметров
   const [items, setItems] = useState(() => {

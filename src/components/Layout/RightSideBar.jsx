@@ -111,14 +111,11 @@ function RightSidebar({ isOpen, onSelectMenu, selectedService, onClose, onOpen }
 		if (!touchStart || !touchMove) return;
 
 		const distance = touchMove - touchStart;
-		const minSwipeDistance = 50; // Минимальная дистанция для свайпа
-
+		const minSwipeDistance = 50;
 		if (distance > minSwipeDistance) {
-			// Свайп вправо: открываем панель
-			onOpen(); // Вызываем функцию открытия панели
+			onOpen(); 
 		} else if (distance < -minSwipeDistance) {
-			// Свайп влево: закрываем панель
-			onClose(); // Вызываем функцию закрытия панели
+			onClose();
 		}
 
 		setTouchStart(null);
@@ -138,44 +135,44 @@ function RightSidebar({ isOpen, onSelectMenu, selectedService, onClose, onOpen }
 			<div className="flex-1 overflow-y-auto p-4">
 				<img src="/logoMain.png" alt="" className="mb-5" />
 				{isLoading ? (
-  <p className={  theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-    Загрузка компаний...
-  </p>
-) : error ? (
-  <p className="text-red-600 mb-4">{error}</p>
-) : companies.length === 0 ? (
-  <p
-    onClick={() => onSelectMenu('LoryAI')}
-    className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} cursor-pointer`}
-  >
-    Нажми чтобы создать компанию!
-  </p>
-) : (
-  <div className="mb-6 flex items-center justify-start p-2">
-    <img
-      className="w-10 h-10 mr-2"
-      src={selectedCompanyObj?.image || '/compLogo.png'}
-      alt={selectedCompanyObj?.name || 'Фото компании'}
-    />
-    <select
-      id="companySelect"
-      value={selectedCompany}
-      onChange={(e) => {
-        setSelectedCompany(e.target.value);
-        onSelectMenu('Business', { companyId: e.target.value });
-      }}
-      className={`w-full p-2 text-xl font-semibold rounded-lg border-0 focus:outline-none ${
-        theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-500'
-      }`}
-    >
-      {companies.map((company) => (
-        <option key={company.id} value={company.id}>
-          {company.name || 'Без названия'}
-        </option>
-      ))}
-    </select>
-  </div>
-)}
+        <p className={  theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
+          Загрузка компаний...
+        </p>
+        ) : error ? (
+          <p className="text-red-600 mb-4">{error}</p>
+        ) : companies.length === 0 ? (
+          <p
+            onClick={() => onSelectMenu('LoryAI')}
+            className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} cursor-pointer`}
+          >
+            Нажми чтобы создать компанию!
+          </p>
+        ) : (
+        <div className="mb-6 flex items-center justify-start p-2">
+          <img
+            className="w-10 h-10 mr-2"
+            src={selectedCompanyObj?.image || '/compLogo.png'}
+            alt={selectedCompanyObj?.name || 'Фото компании'}
+          />
+          <select
+            id="companySelect"
+            value={selectedCompany}
+            onChange={(e) => {
+              setSelectedCompany(e.target.value);
+              onSelectMenu('Business', { companyId: e.target.value });
+            }}
+            className={`w-full p-2 text-xl font-semibold rounded-lg border-0 focus:outline-none ${
+              theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-500'
+            }`}
+          >
+            {companies.map((company) => (
+              <option key={company.id} value={company.id}>
+                {company.name || 'Без названия'}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
 
 				{selectedCompany && (
