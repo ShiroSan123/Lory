@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { useTheme } from '../../ThemeContext'; // Импортируем хук темы
+import { useTheme } from '../../ThemeContext';
 
 const Header = ({
 	onToggleLeftSidebar,
@@ -10,7 +10,7 @@ const Header = ({
 	onUpdateItem,
 }) => {
 	const navigate = useNavigate();
-	const { theme, toggleTheme } = useTheme(); // Используем тему
+	const { theme, toggleTheme } = useTheme();
 	const [userData, setUserData] = useState(null);
 	const [error, setError] = useState("");
 	const [isLoading, setIsLoading] = useState(true);
@@ -18,6 +18,7 @@ const Header = ({
 	const [touchStart, setTouchStart] = useState(null);
 	const [touchMove, setTouchMove] = useState(null);
 	const [isExpanded, setIsExpanded] = useState(false);
+	const [isGlowing, setIsGlowing] = useState(false);
 
 	const screenHeight = typeof window !== "undefined" ? window.innerHeight : 0;
 	const minExpandedHeight = screenHeight * 0.5;
@@ -40,6 +41,37 @@ const Header = ({
 			setEditedItem(selectedItem);
 		}
 	}, [selectedItem]);
+
+	useEffect(() => {
+		let timer;
+		const startGlow = () => {
+			timer = setTimeout(() => {
+				setIsGlowing(true);
+			}, 1000);
+		};
+
+		const resetGlow = () => {
+			clearTimeout(timer);
+			setIsGlowing(false);
+		};
+
+		window.addEventListener("touchstart", resetGlow);
+		window.addEventListener("touchmove", resetGlow);
+		window.addEventListener("touchend", startGlow);
+		window.addEventListener("mousemove", resetGlow);
+		window.addEventListener("click", resetGlow);
+
+		startGlow();
+
+		return () => {
+			clearTimeout(timer);
+			window.removeEventListener("touchstart", resetGlow);
+			window.removeEventListener("touchmove", resetGlow);
+			window.removeEventListener("touchend", startGlow);
+			window.removeEventListener("mousemove", resetGlow);
+			window.removeEventListener("click", resetGlow);
+		};
+	}, []);
 
 	const handleTouchStart = (e) => {
 		setTouchStart(e.targetTouches[0].clientY);
@@ -114,7 +146,7 @@ const Header = ({
 							}`}
 						aria-label="Toggle Sidebar"
 					>
-						<span>{selectedMenu}</span>
+						<span className={isGlowing ? 'glow' : ''}>{selectedMenu}</span>
 					</button>
 					{selectedMenu === "Сотрудники" && selectedEmployee && (
 						<div className="flex flex-col text-sm">
@@ -173,7 +205,6 @@ const Header = ({
 						</button>
 					</div>
 				)}
-				{/* Кнопка смены темы */}
 				<button
 					onClick={toggleTheme}
 					className={`p-2 rounded-full m-4 ${theme === 'dark' ? 'bg-gray-700 text-yellow-400' : 'bg-gray-200 text-gray-800'
@@ -183,6 +214,37 @@ const Header = ({
 					{theme === 'dark' ? '☀️' : '🌙'}
 				</button>
 			</header>
+
+			{/* Обновленные стили для свечения */}
+			<style jsx>{`
+        .glow {
+          animation: ${theme === 'dark' ? 'glowDarkAnimation' : 'glowLightAnimation'} 1.5s infinite alternate;
+        }
+
+        @keyframes glowLightAnimation {
+          0% {
+            text-shadow: 0 0 5px rgba(0, 0, 255, 0.7), 
+                        0 0 10px rgba(0, 0, 255, 0.5);
+          }
+          100% {
+            text-shadow: 0 0 20px rgba(0, 0, 255, 1), 
+                        0 0 30px rgba(0, 0, 255, 0.9), 
+                        0 0 40px rgba(0, 0, 255, 0.7);
+          }
+        }
+
+        @keyframes glowDarkAnimation {
+          0% {
+            text-shadow: 0 0 5px rgba(0, 191, 255, 0.7), 
+                        0 0 10px rgba(0, 191, 255, 0.5);
+          }
+          100% {
+            text-shadow: 0 0 25px rgba(0, 191, 255, 1), 
+                        0 0 35px rgba(0, 191, 255, 0.9), 
+                        0 0 50px rgba(0, 191, 255, 0.7);
+          }
+        }
+      `}</style>
 		</>
 	);
 };
