@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import axios from 'axios';
 import ChatBot from '../../components/chatBot';
 import { useNavigate } from 'react-router-dom';
-import BusinessContent from './BusinessContent'; // Импорт нового компонента
+import BusinessContent from './BusinessContent'; 
 import Content from './Content';
 
 export const MainContent = memo(({
@@ -12,7 +12,8 @@ export const MainContent = memo(({
   isSidebarOpen,
   setIsSidebarOpen,
   selectedEmployee,
-  selectedCompany
+  selectedCompany,
+  selectedService
 }) => {
   const mainRef = useRef(null);
   const navigate = useNavigate();
@@ -89,7 +90,7 @@ export const MainContent = memo(({
 	const buttonOptionsMap = {
 		type: [
 			{ label: 'Услуги', value: 'SERVICE' },
-			{ label: 'Ресторан', value: 'RESTAURANT' },
+			{ label: 'Ресторан', value: 'CATERING'},
 			{ label: 'Недвижимость', value: 'REAL_ESTATE' },
 		],
 		theme: [
@@ -188,20 +189,20 @@ export const MainContent = memo(({
 	}, [token, baseUrl]);
 
 	// Загружаем компании при монтировании компонента
-	useEffect(() => {
-		if (selectedMenu === 'Товары') {
-			fetchCompanies();
-		}
-	}, [selectedMenu, fetchCompanies]);
+	// useEffect(() => {
+	// 	if (selectedMenu === 'Товары') {
+	// 		fetchCompanies();
+	// 	}
+	// }, [selectedMenu, fetchCompanies]);
 
 	// Загружаем услуги для каждой компании
-	useEffect(() => {
-		if (selectedMenu === 'Товары' && companies.length > 0) {
-			companies.forEach(company => {
-				fetchServices(company.id);
-			});
-		}
-	}, [companies, selectedMenu, fetchServices]);
+	// useEffect(() => {
+	// 	if (selectedMenu === 'Товары' && companies.length > 0) {
+	// 		companies.forEach(company => {
+	// 			fetchServices(company.id);
+	// 		});
+	// 	}
+	// }, [companies, selectedMenu, fetchServices]);
 
 	const generateDescriptionAI = useCallback(async (addMessage) => {
 		setLocalLoading(true);
@@ -531,7 +532,7 @@ export const MainContent = memo(({
 												/>
 												Аналитика
 											</label>
-											{formData.type === 'RESTAURANT' ? (
+											{formData.type === 'CATERING' ? (
 												<label className="flex items-center">
 													<input
 														type="checkbox"
@@ -570,7 +571,7 @@ export const MainContent = memo(({
 												/>
 												Мастера
 											</label>
-											{formData.type === 'RESTAURANT' && (
+											{formData.type === 'CATERING' && (
 												<label className="flex items-center">
 													<input
 														type="checkbox"
@@ -863,295 +864,28 @@ export const MainContent = memo(({
 					</div>
 				);
       case 'Business':
-				{ const companyId = selectedEmployee?.companyId;
+				{ 
+					const companyId = selectedCompany.companyId;
+					console.log("Business: ", companyId)
 
-				// Функция для получения данных компании
-				const fetchCompanyData = useCallback(async () => {
-					if (!companyId || !token) {
-						setFetchError('Отсутствует ID компании или токен авторизации');
-						return;
-					}
-
-					setIsFetching(true);
-					setFetchError('');
-
-					try {
-						const response = await axios.get(
-							`${baseUrl}/business/admin`,
-							{
-								headers: {
-									'Authorization': `Bearer ${token}`,
-									'Content-Type': 'application/json'
-								}
-							}
-						);
-
-						const businesses = response.data;
-						const selectedCompany = businesses.find(b => b.id === companyId) || businesses[0];
-
-						if (!selectedCompany) {
-							setFetchError('Компания не найдена в списке');
-							return;
-						}
-
-						const normalizedCompany = {
-							id: selectedCompany.id,
-							name: selectedCompany.name || 'Не указано',
-							description: selectedCompany.description || 'Не указано',
-							type: selectedCompany.type || selectedCompany.businessType || 'Не указано',
-							theme: selectedCompany.theme || { color: 'Не указано' },
-							calendar: selectedCompany.calendar || false,
-							analytics: selectedCompany.analytics || false,
-							telegram: selectedCompany.telegram || false,
-							aiText: selectedCompany.aiText || false,
-							socials: selectedCompany.socials || false,
-							delivery: selectedCompany.delivery || false,
-							createdAt: selectedCompany.createdAt,
-							updatedAt: selectedCompany.updatedAt,
-							ownerId: selectedCompany.ownerId
-						};
-
-						setCompanyDataFromApi(normalizedCompany);
-						setCompanyData(normalizedCompany);
-						const savedCompanies = JSON.parse(localStorage.getItem('companies')) || [];
-						const updatedCompanies = savedCompanies.some(c => c.id === normalizedCompany.id)
-							? savedCompanies.map(c => c.id === normalizedCompany.id ? normalizedCompany : c)
-							: [...savedCompanies, normalizedCompany];
-						localStorage.setItem('companies', JSON.stringify(updatedCompanies));
-					} catch (err) {
-						const errorMessage = err.response?.data?.message || 'Ошибка при загрузке данных компании';
-						setFetchError(errorMessage);
-						const savedCompanies = JSON.parse(localStorage.getItem('companies')) || [];
-						const cachedCompany = savedCompanies.find(c => c.id === companyId);
-						if (cachedCompany) {
-							setCompanyDataFromApi(cachedCompany);
-							setCompanyData(cachedCompany);
-						}
-					} finally {
-						setIsFetching(false);
-					}
-				}, [companyId, token, baseUrl]);
-
-				useEffect(() => {
-					fetchCompanyData();
-				}, [fetchCompanyData]);
-
-				const confirmSaveChanges = () => {
-					if (window.confirm('Вы уверены, что хотите сохранить изменения?')) {
-						handleUpdateCompany(companyId);
-					}
-				};
-
-				const formatBoolean = (value) => value === 'true' || value === true ? 'Да' : 'Нет';
-
-				if (isFetching) {
-					return <div className="p-4">Загрузка данных компании...</div>;
-				}
-
-				if (fetchError && !companyDataFromApi) {
-					return <div className="p-4 text-red-600">{fetchError}</div>;
-				}
-
-				if (!companyDataFromApi) {
-					return <div className="p-4">Данные компании отсутствуют</div>;
-				}
-
-        return (
-					<div className="p-4">
-						<h1 className="text-xl font-bold mb-4">Компания: {companyDataFromApi.name}</h1>
-						{updateError && <p className="text-red-600 mb-4">{updateError}</p>}
-						{updateSuccess && <p className="text-green-600 mb-4">{updateSuccess}</p>}
-						{fetchError && <p className="text-red-600 mb-4">{fetchError} (используются кэшированные данные)</p>}
-
-						{isEditing ? (
-							<div className="grid grid-cols-1 gap-4">
-								<div>
-									<label className="block text-sm font-medium text-gray-700">Название</label>
-									<input
-										type="text"
-										value={companyData?.name || ''}
-										onChange={(e) => setCompanyData({ ...companyData, name: e.target.value })}
-										className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-									/>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-gray-700">Описание</label>
-									<textarea
-										value={companyData?.description || ''}
-										onChange={(e) => setCompanyData({ ...companyData, description: e.target.value })}
-										className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-										rows="3"
-									/>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-gray-700">Тип бизнеса</label>
-									<select
-										value={companyData?.type || ''}
-										onChange={(e) => setCompanyData({ ...companyData, type: e.target.value })}
-										className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-									>
-										<option value="SERVICE">Услуги</option>
-										<option value="RESTAURANT">Ресторан</option>
-										<option value="REAL_ESTATE">Недвижимость</option>
-									</select>
-								</div>
-								<div>
-									<label className="block text-sm font-medium text-gray-700">Цветовая тема</label>
-									<select
-										value={companyData?.theme?.color || ''}
-										onChange={(e) => setCompanyData({ ...companyData, theme: { ...companyData.theme, color: e.target.value } })}
-										className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-									>
-										<option value="blue">Синий</option>
-										<option value="green">Зеленый</option>
-										<option value="red">Красный</option>
-									</select>
-								</div>
-								<div>
-									<label className="flex items-center">
-										<input
-											type="checkbox"
-											checked={companyData?.calendar || false}
-											onChange={(e) => setCompanyData({ ...companyData, calendar: e.target.checked })}
-											className="mr-2"
-										/>
-										Календарь
-									</label>
-								</div>
-								<div>
-									<label className="flex items-center">
-										<input
-											type="checkbox"
-											checked={companyData?.analytics || false}
-											onChange={(e) => setCompanyData({ ...companyData, analytics: e.target.checked })}
-											className="mr-2"
-										/>
-										Аналитика
-									</label>
-								</div>
-								<div>
-									<label className="flex items-center">
-										<input
-											type="checkbox"
-											checked={companyData?.telegram || false}
-											onChange={(e) => setCompanyData({ ...companyData, telegram: e.target.checked })}
-											className="mr-2"
-										/>
-										Сотрудники
-									</label>
-								</div>
-								<div>
-									<label className="flex items-center">
-										<input
-											type="checkbox"
-											checked={companyData?.aiText || false}
-											onChange={(e) => setCompanyData({ ...companyData, aiText: e.target.checked })}
-											className="mr-2"
-										/>
-										LoryAI
-									</label>
-								</div>
-								<div>
-									<label className="flex items-center">
-										<input
-											type="checkbox"
-											checked={companyData?.socials || false}
-											onChange={(e) => setCompanyData({ ...companyData, socials: e.target.checked })}
-											className="mr-2"
-										/>
-										Клиенты
-									</label>
-								</div>
-								<div>
-									<label className="flex items-center">
-										<input
-											type="checkbox"
-											checked={companyData?.delivery || false}
-											onChange={(e) => setCompanyData({ ...companyData, delivery: e.target.checked })}
-											className="mr-2"
-										/>
-										Доставка
-									</label>
-								</div>
-								<div className="flex space-x-2">
-									<button
-										onClick={confirmSaveChanges}
-										className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
-									>
-										Сохранить изменения
-									</button>
-									<button
-										onClick={() => setIsEditing(false)}
-										className="mt-4 px-4 py-2 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600"
-									>
-										Отмена
-									</button>
-								</div>
-							</div>
-						) : (
-							<div className="p-6">
-								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">ID:</strong> {companyDataFromApi.id}
-								</p>
-								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Название:</strong> {companyDataFromApi.name}
-								</p>
-								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Описание:</strong> {companyDataFromApi.description}
-								</p>
-								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Тип бизнеса:</strong> {companyDataFromApi.type}
-								</p>
-								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Цветовая тема:</strong> {companyDataFromApi.theme.color}
-								</p>
-								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Календарь:</strong> {formatBoolean(companyDataFromApi.calendar)}
-								</p>
-								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Аналитика:</strong> {formatBoolean(companyDataFromApi.analytics)}
-								</p>
-								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Сотрудники:</strong> {formatBoolean(companyDataFromApi.telegram)}
-								</p>
-								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">LoryAI:</strong> {formatBoolean(companyDataFromApi.aiText)}
-								</p>
-								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Клиенты:</strong> {formatBoolean(companyDataFromApi.socials)}
-								</p>
-								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Доставка:</strong> {formatBoolean(companyDataFromApi.delivery)}
-								</p>
-								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Владелец (ID):</strong> {companyDataFromApi.ownerId || 'Не указано'}
-								</p>
-								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Дата создания:</strong>{' '}
-									{companyDataFromApi.createdAt ? new Date(companyDataFromApi.createdAt).toLocaleString() : 'Не указано'}
-								</p>
-								<p className="text-base text-gray-800 mb-3">
-									<strong className="font-semibold">Дата обновления:</strong>{' '}
-									{companyDataFromApi.updatedAt ? new Date(companyDataFromApi.updatedAt).toLocaleString() : 'Не указано'}
-								</p>
-								<div className="flex space-x-2">
-									<button
-										onClick={() => setIsEditing(true)}
-										className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
-									>
-										Изменить
-									</button>
-									<button
-										onClick={fetchCompanyData}
-										className="mt-4 px-4 py-2 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600"
-									>
-										Обновить данные
-									</button>
-								</div>
-							</div>
-						)}
-					</div>
-        ); }
+					return <BusinessContent token={localStorage.getItem("token")}
+					 baseUrl={import.meta.env.VITE_API_BASE_URL}
+					 companyId={companyId}
+					 > </BusinessContent>
+				} 
+	case 'Menu':
+					{ 
+						const selectedServiceId = selectedService.serviceId;
+						const index = selectedService.index;
+						console.log("menu2: ", selectedService)
+	
+						return <BusinessContent token={localStorage.getItem("token")}
+						 baseUrl={import.meta.env.VITE_API_BASE_URL}
+						 selectedServiceId={selectedServiceId}
+						 index={index}
+						 > </BusinessContent>
+					} 
+			
       default:
         return   <Content
 		token={localStorage.getItem('token')}

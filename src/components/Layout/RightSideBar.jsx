@@ -3,17 +3,17 @@ import axiosInstance from '../../scripts/axiosInstance';
 import { useNavigate } from 'react-router-dom';
 import RightSidebarServices from './RightSideBarServices';
 
-function RightSidebar({ isOpen, onSelectMenu, menuItems, selectCompany }) {
+function RightSidebar({ isOpen, onSelectMenu, selectedService }) {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState('');
 
-  useEffect(() => {
-	if (selectedCompany) {
-	selectCompany(selectedCompany)
-	}
-  }, [selectCompany, selectedCompany])
+
+  const onSelectedService = (service) => {
+	console.log("service: ", service)
+	selectedService(service);
+  }
 
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
@@ -71,6 +71,8 @@ function RightSidebar({ isOpen, onSelectMenu, menuItems, selectCompany }) {
           }));
           localStorage.setItem('businesses', JSON.stringify(mappedBusinesses));
           setCompanies(mappedBusinesses);
+		  console.log("1")
+		  console.log("start")
           if (mappedBusinesses.length > 0 && !selectedCompany) {
             setSelectedCompany(mappedBusinesses[0].id);
           }
@@ -94,7 +96,7 @@ function RightSidebar({ isOpen, onSelectMenu, menuItems, selectCompany }) {
       }
     };
     fetchCompanies();
-  }, [token, navigate, selectedCompany]);
+  }, []);
 
   return (
     <aside
@@ -140,6 +142,7 @@ function RightSidebar({ isOpen, onSelectMenu, menuItems, selectCompany }) {
         <RightSidebarServices 
           baseUrl={import.meta.env.VITE_API_BASE_URL} 
           companyId={selectedCompany} 
+		  service={onSelectedService}
         />
       </div>
 

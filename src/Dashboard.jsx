@@ -8,6 +8,7 @@ const Dashboard = () => {
 	const [selectedMenu, setSelectedMenu] = useState('Главная');
 	const [selectedEmployee, setSelectedEmployee] = useState(null);
 	const [selectedCompany, setSelectedCompany] = useState(null); // New state for selected company
+	const [selectedService, setSelectedService] = useState(null)
 	const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
 	const [touchStart, setTouchStart] = useState(null);
 	const [touchMove, setTouchMove] = useState(null);
@@ -26,7 +27,7 @@ const Dashboard = () => {
 	}, []);
 
 	const handleSelectMenu = (menu, data = null) => {
-		console.log('Selected Menu in Dashboard:', menu);
+		console.log('Selected Menu in Dashboard:', menu, data);
 		setSelectedMenu(menu);
 		if (menu === 'Business' && data) {
 			setSelectedCompany(data); // data is the company object
@@ -40,12 +41,20 @@ const Dashboard = () => {
 		setIsLeftSidebarOpen(true);
 	};
 
+
+
 	const handleSelectCompany = (company) => {
 		console.log("Выбрана компания: " + company);
-		
+		setSelectedMenu("Menu");
 		setSelectedCompany(company);
 
 	};
+
+	const handleSelectService = (service) => {
+		console.log('Selected Сервис in Dashboard:', service);
+		setSelectedService({ serviceId: service.id, index: service.index });
+		setSelectedMenu("Menu");
+	  };
 
 	// Touch event handlers remain unchanged
 	const handleTouchStart = (e) => {
@@ -88,13 +97,15 @@ const Dashboard = () => {
 				menuItems={menuItems}
 				onSelectMenu={handleSelectMenu}
 				selectCompany={handleSelectCompany}
+				selectedService={handleSelectService}
 			/>
 			<MainContent
 				selectedMenu={selectedMenu}
 				isSidebarOpen={isLeftSidebarOpen}
 				setIsSidebarOpen={setIsSidebarOpenCallback}
 				selectedEmployee={selectedEmployee}
-				selectedCompany={selectedCompany} // Pass selectedCompany
+				selectedCompany={selectedCompany}
+				selectedService={selectedService}
 			/>
 		</div>
 	);

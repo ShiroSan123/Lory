@@ -545,7 +545,7 @@ const BusinessRegistration = () => {
 	const buttonOptionsMap = {
 		type: [
 			{ label: 'Услуги', value: 'SERVICE' },
-			{ label: 'Ресторан', value: 'RESTAURANT' },
+			{ label: 'Ресторан', value: 'CATERING'},
 			{ label: 'Недвижимость', value: 'REAL_ESTATE' },
 		],
 		theme: [
