@@ -146,7 +146,7 @@ function RightSidebar({ isOpen, onSelectMenu, selectedService, onClose, onOpen }
 						onClick={(e) => e.stopPropagation()} // Предотвращаем закрытие при клике на сам блок
 					>
 						<p className="text-lg font-semibold">
-							{notificationClicked ? 'Уведомления уже подключены' : 'Уведомления подключены'}
+							{notificationClicked ? 'Уведомления подключены' : 'Уведомления подключены'}
 						</p>
 						<button
 							onClick={() => setShowNotificationModal(false)}
