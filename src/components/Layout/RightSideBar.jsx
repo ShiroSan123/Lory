@@ -138,7 +138,6 @@ function RightSidebar({ isOpen, onSelectMenu, selectedService }) {
           </div>
         )}
 
-        {/* Компонент для услуг выбранной компании */}
         <RightSidebarServices 
           baseUrl={import.meta.env.VITE_API_BASE_URL} 
           companyId={selectedCompany} 

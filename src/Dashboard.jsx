@@ -6,21 +6,14 @@ import './App.css';
 
 const Dashboard = () => {
 	const [selectedMenu, setSelectedMenu] = useState('Главная');
-	const [selectedEmployee, setSelectedEmployee] = useState(null);
-	const [selectedCompany, setSelectedCompany] = useState(null); // New state for selected company
-	const [selectedService, setSelectedService] = useState(null)
-	const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
 	const [touchStart, setTouchStart] = useState(null);
 	const [touchMove, setTouchMove] = useState(null);
+	const [selectedEmployee, setSelectedEmployee] = useState(null);
+	const [selectedCompany, setSelectedCompany] = useState(null);
+	const [selectedItem, setSelectedItem] = useState(null);
+	const [selectedService, setSelectedService] = useState(null);
+	const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
 
-	const menuItems = [
-		{ icon: '/ico/astronomy.svg', label: 'LoryAI' },
-		{ icon: '/ico/user.svg', label: 'Сотрудники' },
-		{ icon: '/ico/statistic.svg', label: 'Аналитика' },
-		{ icon: '/ico/calendar.svg', label: 'Календарь' },
-		{ icon: '/ico/user-1.svg', label: 'Клиенты' },
-		{ icon: '/ico/shopping.svg', label: 'Товары' },
-	];
 
 	const setIsSidebarOpenCallback = useCallback((value) => {
 		setIsLeftSidebarOpen(value);
@@ -78,37 +71,52 @@ const Dashboard = () => {
 		setTouchMove(null);
 	};
 
+
+  
+	// Обработчик выбора элемента (например, при клике в BusinessContent)
+	const handleSelectItem = useCallback((item) => {
+	  setSelectedItem(item);
+	}, []);
+  
+	// Функция для обновления элемента – вызывается из Header после редактирования
+	const handleUpdateItem = useCallback((updatedItem) => {
+	  setSelectedItem(updatedItem);
+	  // Дополнительно можно обновить данные в выбранном сервисе или компании,
+	  // если это требуется логикой приложения.
+	}, []);
+  
+	// Пример передачи выбранного сервиса, если он хранится отдельно
+
+
 	return (
-		<div
-			className="relative h-screen overflow-hidden"
-			onTouchStart={handleTouchStart}
-			onTouchMove={handleTouchMove}
-			onTouchEnd={handleTouchEnd}
-		>
-			<Header
-				onToggleLeftSidebar={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
-				selectedMenu={selectedMenu}
-				selectedEmployee={selectedEmployee}
-				onSelectMenu={handleSelectMenu}
-			/>
-			<RightSidebar
-				isOpen={!isLeftSidebarOpen}
-				onClose={() => setIsLeftSidebarOpen(true)}
-				menuItems={menuItems}
-				onSelectMenu={handleSelectMenu}
-				selectCompany={handleSelectCompany}
-				selectedService={handleSelectService}
-			/>
-			<MainContent
-				selectedMenu={selectedMenu}
-				isSidebarOpen={isLeftSidebarOpen}
-				setIsSidebarOpen={setIsSidebarOpenCallback}
-				selectedEmployee={selectedEmployee}
-				selectedCompany={selectedCompany}
-				selectedService={selectedService}
-			/>
+		<div className="relative h-screen overflow-hidden">
+		  <Header
+			onToggleLeftSidebar={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
+			selectedMenu={selectedMenu}
+			selectedEmployee={selectedEmployee}
+			// Передаём selectedItem в Header – если он есть, отображается форма редактирования
+			selectedItem={selectedItem}
+			onUpdateItem={handleUpdateItem}
+		  />
+		  <RightSidebar
+			isOpen={!isLeftSidebarOpen}
+			onClose={() => setIsLeftSidebarOpen(true)}
+			// Здесь передаём обработчики выбора меню, компаний и сервисов
+			onSelectMenu={(menu, data) => setSelectedMenu(menu)}
+			selectCompany={(company) => setSelectedCompany(company)}
+			selectedService={handleSelectService}
+		  />
+		  <MainContent
+			selectedMenu={selectedMenu}
+			isSidebarOpen={isLeftSidebarOpen}
+			selectedEmployee={selectedEmployee}
+			selectedCompany={selectedCompany}
+			// Передаём выбранный сервис, а также функцию для выбора отдельного айтема
+			selectedService={selectedService}
+			onSelectItem={handleSelectItem}
+		  />
 		</div>
-	);
-};
+	  );
+	};
 
 export default Dashboard;
