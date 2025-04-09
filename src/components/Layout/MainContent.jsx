@@ -1,36 +1,37 @@
-// MainContent.jsx
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import axios from 'axios';
 import ChatBot from '../../components/chatBot';
 import { useNavigate } from 'react-router-dom';
-import BusinessContent from './BusinessContent'; 
+import BusinessContent from './BusinessContent';
 import Content from './Content';
+import { useTheme } from '../../ThemeContext';
 
 export const MainContent = memo(({
-  selectedMenu,
-  isLoading = false,
-  isSidebarOpen,
-  setIsSidebarOpen,
-  selectedEmployee,
-  selectedCompany,
-  selectedService
+	selectedMenu,
+	isLoading = false,
+	isSidebarOpen,
+	setIsSidebarOpen,
+	selectedEmployee,
+	selectedCompany,
+	selectedService
 }) => {
-  const mainRef = useRef(null);
-  const navigate = useNavigate();
-  const [isSwiped, setIsSwiped] = useState(false);
+	const mainRef = useRef(null);
+	const navigate = useNavigate();
+	const [isSwiped, setIsSwiped] = useState(false);
+	const { theme } = useTheme(); // Получаем текущую тему
 
-	// Company states (были ранее)
+	// Company states
 	const [companyData, setCompanyData] = useState(null);
 	const [updateError, setUpdateError] = useState('');
 	const [updateSuccess, setUpdateSuccess] = useState('');
 	const [isEditing, setIsEditing] = useState(false);
 
-	// Новые состояния для Business, вынесенные на верхний уровень
+	// Новые состояния для Business
 	const [companyDataFromApi, setCompanyDataFromApi] = useState(null);
 	const [fetchError, setFetchError] = useState('');
 	const [isFetching, setIsFetching] = useState(false);
 
-	// Registration states (были ранее)
+	// Registration states
 	const initialFormData = {
 		name: '',
 		description: '',
@@ -50,7 +51,7 @@ export const MainContent = memo(({
 	const [businesses, setBusinesses] = useState([]);
 	const [isChoosingDescription, setIsChoosingDescription] = useState(false);
 
-	// Остальные состояния остаются без изменений
+	// Остальные состояния
 	const [companies, setCompanies] = useState([]);
 	const [services, setServices] = useState({});
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -90,7 +91,7 @@ export const MainContent = memo(({
 	const buttonOptionsMap = {
 		type: [
 			{ label: 'Услуги', value: 'SERVICE' },
-			{ label: 'Ресторан', value: 'CATERING'},
+			{ label: 'Ресторан', value: 'CATERING' },
 			{ label: 'Недвижимость', value: 'REAL_ESTATE' },
 		],
 		theme: [
@@ -111,7 +112,6 @@ export const MainContent = memo(({
 	const token = localStorage.getItem('token');
 	const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
-	// Функция для получения списка компаний
 	const fetchCompanies = useCallback(async () => {
 		try {
 			const response = await axios.get(
@@ -124,7 +124,6 @@ export const MainContent = memo(({
 		}
 	}, [token, baseUrl]);
 
-	// Функция для добавления новой услуги
 	const addService = useCallback(async (businessId, serviceData) => {
 		const newService = {
 			moduleType: "MENU",
@@ -161,7 +160,6 @@ export const MainContent = memo(({
 		}
 	}, [token, baseUrl]);
 
-	// Функция для получения услуг компании
 	const fetchServices = useCallback(async (businessId) => {
 		try {
 			const response = await axios.get(
@@ -187,22 +185,6 @@ export const MainContent = memo(({
 			}));
 		}
 	}, [token, baseUrl]);
-
-	// Загружаем компании при монтировании компонента
-	// useEffect(() => {
-	// 	if (selectedMenu === 'Товары') {
-	// 		fetchCompanies();
-	// 	}
-	// }, [selectedMenu, fetchCompanies]);
-
-	// Загружаем услуги для каждой компании
-	// useEffect(() => {
-	// 	if (selectedMenu === 'Товары' && companies.length > 0) {
-	// 		companies.forEach(company => {
-	// 			fetchServices(company.id);
-	// 		});
-	// 	}
-	// }, [companies, selectedMenu, fetchServices]);
 
 	const generateDescriptionAI = useCallback(async (addMessage) => {
 		setLocalLoading(true);
@@ -336,7 +318,6 @@ export const MainContent = memo(({
 				{ headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
 			);
 			console.log('[handleSubmit] Business registered:', response.data);
-			// Проверяем возможные ключи для ID
 			const businessId = response.data.id || response.data.businessId || response.data._id;
 			if (!businessId) {
 				throw new Error('ID бизнеса не получен от сервера.');
@@ -415,7 +396,6 @@ export const MainContent = memo(({
 				console.log('[submitConfig] Service added:', response.data);
 				addMessage({ sender: 'bot', text: 'Модуль успешно добавлен!' });
 			}
-			// Здесь можно добавить логику для других модулей (аналитика, календарь, мастера, доставка)
 			addMessage({ sender: 'bot', text: 'Настройки успешно применены!' });
 			setTimeout(() => {
 				console.log('[submitConfig] Navigating to /Dashboard');
@@ -482,13 +462,13 @@ export const MainContent = memo(({
 		setConfigError('');
 	}, []);
 
-  const handleUpdateCompany = useCallback(async (companyId) => {
-    try {
-      const response = await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/companies/${companyId}`,
-        {}, // companyData – можно передать актуальные данные или использовать другой механизм
-        { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' } }
-      );
+	const handleUpdateCompany = useCallback(async (companyId) => {
+		try {
+			const response = await axios.put(
+				`${import.meta.env.VITE_API_BASE_URL}/companies/${companyId}`,
+				{},
+				{ headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' } }
+			);
 
 			const savedCompanies = JSON.parse(localStorage.getItem('companies')) || [];
 			const updatedCompanies = savedCompanies.map(company =>
@@ -499,16 +479,16 @@ export const MainContent = memo(({
 			setUpdateSuccess('Данные компании успешно обновлены!');
 			setUpdateError('');
 			setTimeout(() => window.location.reload(), 1000);
-    } catch (err) {
-      console.error('[handleUpdateCompany] Ошибка:', err.response?.data || err.message);
-    }
-  }, []);
+		} catch (err) {
+			console.error('[handleUpdateCompany] Ошибка:', err.response?.data || err.message);
+		}
+	}, []);
 
-  const renderMainContent = () => {
-    switch (selectedMenu) {
-      case 'LoryAI':
-        return (
-          <ChatBot
+	const renderMainContent = () => {
+		switch (selectedMenu) {
+			case 'LoryAI':
+				return (
+					<ChatBot
 						onSubmitData={handleChatSubmit}
 						customBotMessage={getBotMessage()}
 						showButtons={showButtons}
@@ -516,21 +496,24 @@ export const MainContent = memo(({
 						onButtonClick={handleButtonClick}
 						isLoading={localLoading || isRegistering}
 						startRegistration={startRegistration}
-          >
-            {(addMessage) => (
+					>
+						{(addMessage) => (
 							<>
 								{isConfiguring && (
-									<div className="mt-4 p-4 bg-gray-100 rounded-lg">
-										<h3 className="text-lg font-bold mb-2">Настройка бизнеса</h3>
+									<div className={`mt-4 p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+										}`}>
+										<h3 className={`text-lg font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-800'
+											}`}>Настройка бизнеса</h3>
 										<div className="space-y-2">
 											<label className="flex items-center">
 												<input
 													type="checkbox"
 													checked={configData.analytics}
 													onChange={(e) => setConfigData(prev => ({ ...prev, analytics: e.target.checked }))}
-													className="mr-2"
+													className={`mr-2 ${theme === 'dark' ? 'text-blue-400 border-gray-500' : 'text-blue-600 border-gray-300'
+														}`}
 												/>
-												Аналитика
+												<span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>Аналитика</span>
 											</label>
 											{formData.type === 'CATERING' ? (
 												<label className="flex items-center">
@@ -538,9 +521,10 @@ export const MainContent = memo(({
 														type="checkbox"
 														checked={configData.menu}
 														onChange={(e) => setConfigData(prev => ({ ...prev, menu: e.target.checked }))}
-														className="mr-2"
+														className={`mr-2 ${theme === 'dark' ? 'text-blue-400 border-gray-500' : 'text-blue-600 border-gray-300'
+															}`}
 													/>
-													Меню
+													<span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>Меню</span>
 												</label>
 											) : (
 												<label className="flex items-center">
@@ -548,9 +532,10 @@ export const MainContent = memo(({
 														type="checkbox"
 														checked={configData.products}
 														onChange={(e) => setConfigData(prev => ({ ...prev, products: e.target.checked }))}
-														className="mr-2"
+														className={`mr-2 ${theme === 'dark' ? 'text-blue-400 border-gray-500' : 'text-blue-600 border-gray-300'
+															}`}
 													/>
-													Товары
+													<span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>Товары</span>
 												</label>
 											)}
 											<label className="flex items-center">
@@ -558,18 +543,20 @@ export const MainContent = memo(({
 													type="checkbox"
 													checked={configData.calendar}
 													onChange={(e) => setConfigData(prev => ({ ...prev, calendar: e.target.checked }))}
-													className="mr-2"
+													className={`mr-2 ${theme === 'dark' ? 'text-blue-400 border-gray-500' : 'text-blue-600 border-gray-300'
+														}`}
 												/>
-												Календарь
+												<span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>Календарь</span>
 											</label>
 											<label className="flex items-center">
 												<input
 													type="checkbox"
 													checked={configData.masters}
 													onChange={(e) => setConfigData(prev => ({ ...prev, masters: e.target.checked }))}
-													className="mr-2"
+													className={`mr-2 ${theme === 'dark' ? 'text-blue-400 border-gray-500' : 'text-blue-600 border-gray-300'
+														}`}
 												/>
-												Мастера
+												<span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>Мастера</span>
 											</label>
 											{formData.type === 'CATERING' && (
 												<label className="flex items-center">
@@ -577,9 +564,10 @@ export const MainContent = memo(({
 														type="checkbox"
 														checked={configData.delivery}
 														onChange={(e) => setConfigData(prev => ({ ...prev, delivery: e.target.checked }))}
-														className="mr-2"
+														className={`mr-2 ${theme === 'dark' ? 'text-blue-400 border-gray-500' : 'text-blue-600 border-gray-300'
+															}`}
 													/>
-													Доставка
+													<span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>Доставка</span>
 												</label>
 											)}
 										</div>
@@ -588,71 +576,154 @@ export const MainContent = memo(({
 												console.log('[Save Button] Clicked');
 												submitConfig(addMessage);
 											}}
-											className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
+											className={`mt-4 px-4 py-2 rounded-lg text-sm ${theme === 'dark' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-500 text-white hover:bg-blue-600'
+												}`}
 										>
 											Сохранить настройки
 										</button>
 									</div>
 								)}
 							</>
-            )}
-          </ChatBot>
-        );
+						)}
+					</ChatBot>
+				);
 			case 'Сотрудники':
+			case 'Клиенты':
 				return (
 					<div className="p-4">
+						{selectedMenu === 'Клиенты' && (
+							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+								<div className={`p-4 rounded-lg shadow ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+									}`}>
+									<h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'
+										}`}>11 410</h2>
+									<p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+										}`}>Клиенты за 6 мес.</p>
+								</div>
+								<div className={`p-4 rounded-lg shadow ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+									}`}>
+									<h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'
+										}`}>2 129</h2>
+									<p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+										}`}>Постоянные</p>
+								</div>
+								<div className={`p-4 rounded-lg shadow ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+									}`}>
+									<h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'
+										}`}>4 738</h2>
+									<p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+										}`}>Потенциальные (менее 3 посещений)</p>
+								</div>
+								<div className={`p-4 rounded-lg shadow ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+									}`}>
+									<h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'
+										}`}>4 543</h2>
+									<p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+										}`}>Общо по посещению за 6 мес.</p>
+								</div>
+							</div>
+						)}
 						<div className="overflow-x-auto">
-							<table className="min-w-full bg-white border border-gray-200 rounded-lg">
+							<table className={`min-w-full rounded-lg border ${theme === 'dark' ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'
+								}`}>
 								<thead>
-									<tr className="bg-gray-50">
-										<th className="px-4 py-2 text-left text-sm font-medium text-gray-600 border-b"></th>
-										<th className="px-4 py-2 text-left text-sm font-medium text-gray-600 border-b">Клиент</th>
-										<th className="px-4 py-2 text-left text-sm font-medium text-gray-600 border-b">Телефон</th>
-										<th className="px-4 py-2 text-left text-sm font-medium text-gray-600 border-b">Посещений</th>
-										<th className="px-4 py-2 text-left text-sm font-medium text-gray-600 border-b">Отмененные</th>
-										<th className="px-4 py-2 text-left text-sm font-medium text-gray-600 border-b">Выручка</th>
+									<tr className={theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}>
+										<th className={`px-4 py-2 text-left text-sm font-medium border-b ${theme === 'dark' ? 'text-gray-300 border-gray-600' : 'text-gray-600 border-gray-200'
+											}`}></th>
+										<th className={`px-4 py-2 text-left text-sm font-medium border-b ${theme === 'dark' ? 'text-gray-300 border-gray-600' : 'text-gray-600 border-gray-200'
+											}`}>Клиент</th>
+										<th className={`px-4 py-2 text-left text-sm font-medium border-b ${theme === 'dark' ? 'text-gray-300 border-gray-600' : 'text-gray-600 border-gray-200'
+											}`}>Телефон</th>
+										<th className={`px-4 py-2 text-left text-sm font-medium border-b ${theme === 'dark' ? 'text-gray-300 border-gray-600' : 'text-gray-600 border-gray-200'
+											}`}>Посещений</th>
+										<th className={`px-4 py-2 text-left text-sm font-medium border-b ${theme === 'dark' ? 'text-gray-300 border-gray-600' : 'text-gray-600 border-gray-200'
+											}`}>Отмененные</th>
+										<th className={`px-4 py-2 text-left text-sm font-medium border-b ${theme === 'dark' ? 'text-gray-300 border-gray-600' : 'text-gray-600 border-gray-200'
+											}`}>Выручка</th>
 									</tr>
 								</thead>
 								<tbody>
-									<tr>
-										<td className="px-4 py-2 border-b">
-											<input type="checkbox" className="h-4 w-4 text-blue-600 border-gray-300 rounded" />
+									<tr className={theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
+										<td className={`px-4 py-2 border-b ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'
+											}`}>
+											<input
+												type="checkbox"
+												className={`h-4 w-4 rounded ${theme === 'dark' ? 'text-blue-400 border-gray-500' : 'text-blue-600 border-gray-300'
+													}`}
+											/>
 										</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">Владимир Трубиков</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">+7 914 218-30-18</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">2</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">0</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">1 000</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>Владимир Трубиков</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>+7 914 218-30-18</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>2</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>0</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>1 000</td>
 									</tr>
-									<tr>
-										<td className="px-4 py-2 border-b">
-											<input type="checkbox" className="h-4 w-4 text-blue-600 border-gray-300 rounded" />
+									<tr className={theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
+										<td className={`px-4 py-2 border-b ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'
+											}`}>
+											<input
+												type="checkbox"
+												className={`h-4 w-4 rounded ${theme === 'dark' ? 'text-blue-400 border-gray-500' : 'text-blue-600 border-gray-300'
+													}`}
+											/>
 										</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">Григорий Акаев</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">+7 924 664-33-35</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">33</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">10</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">36 478</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>Григорий Акаев</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>+7 924 664-33-35</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>33</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>10</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>36 478</td>
 									</tr>
-									<tr>
-										<td className="px-4 py-2 border-b">
-											<input type="checkbox" className="h-4 w-4 text-blue-600 border-gray-300 rounded" checked />
+									<tr className={theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
+										<td className={`px-4 py-2 border-b ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'
+											}`}>
+											<input
+												type="checkbox"
+												className={`h-4 w-4 rounded ${theme === 'dark' ? 'text-blue-400 border-gray-500' : 'text-blue-600 border-gray-300'
+													}`}
+												checked
+											/>
 										</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">Павел Буздарь</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">+7 964 432-85-36</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">15</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">5</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">69 000</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>Павел Буздарь</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>+7 964 432-85-36</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>15</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>5</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>69 000</td>
 									</tr>
-									<tr>
-										<td className="px-4 py-2 border-b">
-											<input type="checkbox" className="h-4 w-4 text-blue-600 border-gray-300 rounded" checked />
+									<tr className={theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
+										<td className={`px-4 py-2 border-b ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'
+											}`}>
+											<input
+												type="checkbox"
+												className={`h-4 w-4 rounded ${theme === 'dark' ? 'text-blue-400 border-gray-500' : 'text-blue-600 border-gray-300'
+													}`}
+												checked
+											/>
 										</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">Ханалыев Ленат</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">+7 962 724-88-34</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">4</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">0</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">10 000</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>Ханалыев Ленат</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>+7 962 724-88-34</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>4</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>0</td>
+										<td className={`px-4 py-2 border-b text-sm ${theme === 'dark' ? 'text-gray-200 border-gray-600' : 'text-gray-800 border-gray-200'
+											}`}>10 000</td>
 									</tr>
 								</tbody>
 							</table>
@@ -660,130 +731,59 @@ export const MainContent = memo(({
 					</div>
 				);
 			case 'Аналитика':
-				return <h1 className="p-4">Аналитика</h1>;
+				return <h1 className={`p-4 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>Аналитика</h1>;
 			case 'Календарь':
-				return <h1 className="p-4">Календарь</h1>;
-			case 'Клиенты':
-				return (
-					<div className="p-4">
-						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-							<div className="bg-gray-100 p-4 rounded-lg shadow">
-								<h2 className="text-2xl font-bold text-gray-800">11 410</h2>
-								<p className="text-sm text-gray-600">Клиенты за 6 мес.</p>
-							</div>
-							<div className="bg-gray-100 p-4 rounded-lg shadow">
-								<h2 className="text-2xl font-bold text-gray-800">2 129</h2>
-								<p className="text-sm text-gray-600">Постоянные</p>
-							</div>
-							<div className="bg-gray-100 p-4 rounded-lg shadow">
-								<h2 className="text-2xl font-bold text-gray-800">4 738</h2>
-								<p className="text-sm text-gray-600">Потенциальные (менее 3 посещений)</p>
-							</div>
-							<div className="bg-gray-100 p-4 rounded-lg shadow">
-								<h2 className="text-2xl font-bold text-gray-800">4 543</h2>
-								<p className="text-sm text-gray-600">Общо по посещению за 6 мес.</p>
-							</div>
-						</div>
-						<div className="overflow-x-auto">
-							<table className="min-w-full bg-white border border-gray-200 rounded-lg">
-								<thead>
-									<tr className="bg-gray-50">
-										<th className="px-4 py-2 text-left text-sm font-medium text-gray-600 border-b"></th>
-										<th className="px-4 py-2 text-left text-sm font-medium text-gray-600 border-b">Клиент</th>
-										<th className="px-4 py-2 text-left text-sm font-medium text-gray-600 border-b">Телефон</th>
-										<th className="px-4 py-2 text-left text-sm font-medium text-gray-600 border-b">Посещений</th>
-										<th className="px-4 py-2 text-left text-sm font-medium text-gray-600 border-b">Отмененные</th>
-										<th className="px-4 py-2 text-left text-sm font-medium text-gray-600 border-b">Выручка</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr>
-										<td className="px-4 py-2 border-b">
-											<input type="checkbox" className="h-4 w-4 text-blue-600 border-gray-300 rounded" />
-										</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">Владимир Трубиков</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">+7 914 218-30-18</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">2</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">0</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">1 000</td>
-									</tr>
-									<tr>
-										<td className="px-4 py-2 border-b">
-											<input type="checkbox" className="h-4 w-4 text-blue-600 border-gray-300 rounded" />
-										</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">Григорий Акаев</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">+7 924 664-33-35</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">33</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">10</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">36 478</td>
-									</tr>
-									<tr>
-										<td className="px-4 py-2 border-b">
-											<input type="checkbox" className="h-4 w-4 text-blue-600 border-gray-300 rounded" checked />
-										</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">Павел Буздарь</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">+7 964 432-85-36</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">15</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">5</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">69 000</td>
-									</tr>
-									<tr>
-										<td className="px-4 py-2 border-b">
-											<input type="checkbox" className="h-4 w-4 text-blue-600 border-gray-300 rounded" checked />
-										</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">Ханалыев Ленат</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">+7 962 724-88-34</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">4</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">0</td>
-										<td className="px-4 py-2 border-b text-sm text-gray-800">10 000</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
-					</div>
-				);
+				return <h1 className={`p-4 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>Календарь</h1>;
 			case 'Товары':
 				return (
 					<div className="p-4">
-						<h1 className="text-xl font-bold mb-4">Товары</h1>
+						<h1 className={`text-xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-black'
+							}`}>Товары</h1>
 						{companies.length === 0 ? (
-							<p className="text-gray-600">Компании не найдены или данные загружаются...</p>
+							<p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Компании не найдены или данные загружаются...</p>
 						) : (
 							companies.map(company => (
 								<div key={company.id} className="mb-6">
-									<h2 className="text-lg font-semibold text-gray-800 mb-2">{company.name}</h2>
+									<h2 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'
+										}`}>{company.name}</h2>
 									<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 										{(services[company.id] || []).length > 0 ? (
 											services[company.id].map((service, index) => (
 												<div
 													key={index}
-													className="bg-white rounded-2xl shadow-md overflow-hidden"
+													className={`rounded-2xl shadow-md overflow-hidden ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'
+														}`}
 												>
 													<img
 														src="/images/placeholder.jpg"
 														alt={service.name || 'Товар'}
 														className="w-full h-60 object-cover rounded-t-lg"
 													/>
-													<div className="p-4 bg-white rounded-2xl">
-														<h3 className="text-lg font-semibold text-gray-800">
+													<div className={`p-4 rounded-2xl ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'
+														}`}>
+														<h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'
+															}`}>
 															{service.name || 'Без названия'}
 														</h3>
-														<p className="text-sm text-gray-600 mt-1">
+														<p className={`text-sm mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+															}`}>
 															{service.description || 'Описание отсутствует'}
 														</p>
-														<p className="text-lg font-bold text-gray-800 mt-2">
+														<p className={`text-lg font-bold mt-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'
+															}`}>
 															{service.price ? `${service.price} ₽` : 'Цена не указана'}
 														</p>
 													</div>
 												</div>
 											))
 										) : (
-											<p className="text-gray-600">Товары для {company.name} отсутствуют.</p>
+											<p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Товары для {company.name} отсутствуют.</p>
 										)}
 									</div>
 									<button
 										onClick={() => openModalForService(company.id)}
-										className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
+										className={`mt-4 px-4 py-2 rounded-lg text-sm ${theme === 'dark' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-500 text-white hover:bg-blue-600'
+											}`}
 									>
 										Добавить
 									</button>
@@ -797,8 +797,10 @@ export const MainContent = memo(({
 									className="absolute inset-0 bg-black opacity-25"
 									onClick={closeModal}
 								></div>
-								<div className="relative bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-									<h2 className="text-xl font-bold mb-4">Добавить новый товар</h2>
+								<div className={`relative rounded-lg shadow-lg p-6 w-full max-w-md ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'
+									}`}>
+									<h2 className={`text-xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-black'
+										}`}>Добавить новый товар</h2>
 									<form
 										onSubmit={(e) => {
 											e.preventDefault();
@@ -812,33 +814,39 @@ export const MainContent = memo(({
 										}}
 									>
 										<div className="mb-4">
-											<label className="block text-sm font-medium text-gray-700">Название</label>
+											<label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+												}`}>Название</label>
 											<input
 												type="text"
 												name="name"
 												defaultValue=""
-												className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+												className={`mt-1 p-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'
+													}`}
 												required
 											/>
 										</div>
 										<div className="mb-4">
-											<label className="block text-sm font-medium text-gray-700">Описание</label>
+											<label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+												}`}>Описание</label>
 											<textarea
 												name="description"
 												defaultValue=""
-												className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+												className={`mt-1 p-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'
+													}`}
 												rows="3"
 												required
 											/>
 										</div>
 										<div className="mb-4">
-											<label className="block text-sm font-medium text-gray-700">Цена (₽)</label>
+											<label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+												}`}>Цена (₽)</label>
 											<input
 												type="number"
 												name="price"
 												defaultValue=""
 												step="0.01"
-												className="mt-1 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+												className={`mt-1 p-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'
+													}`}
 												required
 											/>
 										</div>
@@ -846,13 +854,15 @@ export const MainContent = memo(({
 											<button
 												type="button"
 												onClick={closeModal}
-												className="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600"
+												className={`px-4 py-2 rounded-lg text-sm ${theme === 'dark' ? 'bg-gray-600 text-white hover:bg-gray-700' : 'bg-gray-500 text-white hover:bg-gray-600'
+													}`}
 											>
 												Отмена
 											</button>
 											<button
 												type="submit"
-												className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
+												className={`px-4 py-2 rounded-lg text-sm ${theme === 'dark' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-500 text-white hover:bg-blue-600'
+													}`}
 											>
 												Добавить
 											</button>
@@ -863,48 +873,57 @@ export const MainContent = memo(({
 						)}
 					</div>
 				);
-      case 'Business':
-				{ 
+			case 'Business':
+				{
 					const companyId = selectedCompany.companyId;
-					console.log("Business: ", companyId)
+					console.log("Business: ", companyId);
+					return (
+						<BusinessContent
+							token={localStorage.getItem("token")}
+							baseUrl={import.meta.env.VITE_API_BASE_URL}
+							companyId={companyId}
+						/>
+					);
+				}
+			case 'Menu':
+				{
+					const selectedServiceId = selectedService.serviceId;
+					const index = selectedService.index;
+					console.log("menu2: ", selectedService);
+					return (
+						<BusinessContent
+							token={localStorage.getItem("token")}
+							baseUrl={import.meta.env.VITE_API_BASE_URL}
+							selectedServiceId={selectedServiceId}
+							index={index}
+						/>
+					);
+				}
+			default:
+				return (
+					<Content
+						token={localStorage.getItem('token')}
+						baseUrl={import.meta.env.VITE_API_BASE_URL}
+						selectedEmployee={selectedEmployee}
+						handleUpdateCompany={handleUpdateCompany}
+					/>
+				);
+		}
+	};
 
-					return <BusinessContent token={localStorage.getItem("token")}
-					 baseUrl={import.meta.env.VITE_API_BASE_URL}
-					 companyId={companyId}
-					 > </BusinessContent>
-				} 
-	case 'Menu':
-					{ 
-						const selectedServiceId = selectedService.serviceId;
-						const index = selectedService.index;
-						console.log("menu2: ", selectedService)
-	
-						return <BusinessContent token={localStorage.getItem("token")}
-						 baseUrl={import.meta.env.VITE_API_BASE_URL}
-						 selectedServiceId={selectedServiceId}
-						 index={index}
-						 > </BusinessContent>
-					} 
-			
-      default:
-        return   <Content
-		token={localStorage.getItem('token')}
-		baseUrl={import.meta.env.VITE_API_BASE_URL}
-		selectedEmployee={selectedEmployee}
-		handleUpdateCompany={handleUpdateCompany}
-	  />;
-    }
-  };
-
-  return (
-    <main
-      ref={mainRef}
-      onClick={() => setIsSwiped(true)}
-      className={`md:fixed rounded-br-2xl bg-white pr-4 md:pt-2 md:px-6 md:left-0 w-screen md:w-[calc(100vw-17rem)] h-[calc(100vh-136px)] overflow-y-auto overflow-x-hidden transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-full' : '-translate-x-0'} ${!isSidebarOpen ? 'md:hidden' : 'md:block'} md:translate-x-0 z-10`}
-    >
-      {isLoading ? <div className="p-4">Loading...</div> : renderMainContent()}
-    </main>
-  );
+	return (
+		<main
+			ref={mainRef}
+			onClick={() => setIsSwiped(true)}
+			className={`md:fixed rounded-br-2xl pr-4 md:pt-2 md:px-6 md:left-0 w-screen md:w-[calc(100vw-17rem)] h-[calc(100vh-136px)] overflow-y-auto overflow-x-hidden transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-full' : '-translate-x-0'
+				} ${!isSidebarOpen ? 'md:hidden' : 'md:block'} md:translate-x-0 z-10 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-black'
+				}`}
+		>
+			{isLoading ? (
+				<div className="p-4">Loading...</div>
+			) : renderMainContent()}
+		</main>
+	);
 });
 
 export default MainContent;

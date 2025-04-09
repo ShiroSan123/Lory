@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { useTheme } from '../ThemeContext';
 
 const ChatBot = ({ onSubmitData, customBotMessage, showButtons, buttonOptions, onButtonClick, startRegistration, isLoading, children, onAddMessage }) => {
 	const [messages, setMessages] = useState([
@@ -88,9 +89,12 @@ const ChatBot = ({ onSubmitData, customBotMessage, showButtons, buttonOptions, o
 		}
 	}, [messages]);
 
+	const { theme } = useTheme();
+
 	return (
 		// Центрирование и ограничение по ширине для адаптивности на десктопе и мобильных устройствах
-		<div className="flex flex-col h-full p-4 w-full max-w-md mx-auto">
+		<div className={`flex flex-col h-full p-4 w-full max-w-md mx-auto ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'
+			}`}>
 			<header className="mb-4 bg-gray-100 p-4 rounded-lg shadow">
 				<div className="flex items-center gap-2">
 					<img src="/Logo-ico.svg" alt="Logo" className="h-8" />

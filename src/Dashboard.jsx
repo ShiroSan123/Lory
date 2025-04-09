@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import RightSidebar from './components/Layout/RightSideBar';
 import MainContent from './components/Layout/MainContent';
 import Header from './components/Layout/Header';
+import { ThemeProvider } from './ThemeContext'; // Импортируем провайдер темы
 import './App.css';
 
 const Dashboard = () => {
@@ -31,12 +32,6 @@ const Dashboard = () => {
 			setSelectedEmployee(null);
 		}
 		setIsLeftSidebarOpen(true);
-	};
-
-	const handleSelectCompany = (company) => {
-		console.log("Выбрана компания: " + company);
-		setSelectedMenu("Menu");
-		setSelectedCompany(company);
 	};
 
 	const handleSelectService = (service) => {
@@ -75,35 +70,36 @@ const Dashboard = () => {
 	}, []);
 
 	return (
-		<div
-			className="relative h-screen overflow-hidden"
-			onTouchStart={handleTouchStart}
-			onTouchMove={handleTouchMove}
-			onTouchEnd={handleTouchEnd}
-		>
-			<Header
-				onToggleLeftSidebar={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
-				selectedMenu={selectedMenu}
-				selectedEmployee={selectedEmployee}
-				selectedItem={selectedItem}
-				onUpdateItem={handleUpdateItem}
-			/>
-			<RightSidebar
-				isOpen={!isLeftSidebarOpen}
-				onClose={() => setIsLeftSidebarOpen(true)}
-				onSelectMenu={(menu, data) => setSelectedMenu(menu)}
-				selectCompany={(company) => setSelectedCompany(company)}
-				selectedService={handleSelectService}
-			/>
-			<MainContent
-				selectedMenu={selectedMenu}
-				isSidebarOpen={isLeftSidebarOpen}
-				selectedEmployee={selectedEmployee}
-				selectedCompany={selectedCompany}
-				selectedService={selectedService}
-				onSelectItem={handleSelectItem}
-			/>
-		</div>
+		<ThemeProvider>
+			<div
+				className="relative h-screen overflow-hidden"
+				onTouchStart={handleTouchStart}
+				onTouchMove={handleTouchMove}
+				onTouchEnd={handleTouchEnd}
+			>
+				<Header
+					onToggleLeftSidebar={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
+					selectedMenu={selectedMenu}
+					selectedEmployee={selectedEmployee}
+					selectedItem={selectedItem}
+					onUpdateItem={handleUpdateItem}
+				/>
+				<RightSidebar
+					isOpen={isLeftSidebarOpen}
+					onClose={() => setIsLeftSidebarOpen(false)}
+					onSelectMenu={handleSelectMenu}
+					selectedService={handleSelectService}
+				/>
+				<MainContent
+					selectedMenu={selectedMenu}
+					isSidebarOpen={isLeftSidebarOpen}
+					selectedEmployee={selectedEmployee}
+					selectedCompany={selectedCompany}
+					selectedService={selectedService}
+					onSelectItem={handleSelectItem}
+				/>
+			</div>
+		</ThemeProvider>
 	);
 };
 
