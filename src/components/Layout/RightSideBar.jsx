@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import axiosInstance from '../../scripts/axiosInstance';
 import { useNavigate } from 'react-router-dom';
-import RightSidebarServices from './RightSideBarServices';
+import RightSideBarServices from './RightSidebarServices';
 
 function RightSidebar({ isOpen, onSelectMenu, selectedService }) {
   const [error, setError] = useState('');
@@ -138,7 +138,7 @@ function RightSidebar({ isOpen, onSelectMenu, selectedService }) {
           </div>
         )}
 
-        <RightSidebarServices 
+        <RightSideBarServices 
           baseUrl={import.meta.env.VITE_API_BASE_URL} 
           companyId={selectedCompany} 
 		  service={onSelectedService}

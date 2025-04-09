@@ -64,29 +64,6 @@ const Header = ({
           </div>
         )}
       </div>
-      <div className="flex items-center md:pl-6">
-        {isLoading ? (
-          <p>Loading...</p>
-        ) : error ? (
-          <p className="text-red-600">{error}</p>
-        ) : userData ? (
-          <div className="flex items-center gap-4">
-            <a className="text-lg font-bold" href="/dashboard">
-              <p>{userData?.name || "User"}</p>
-            </a>
-            <button
-              onClick={handleLogout}
-              className="flex items-center p-2 gap-2 rounded-lg hover:bg-gray-100 cursor-pointer text-red-600"
-            >
-              Выйти
-            </button>
-          </div>
-        ) : (
-          <a className="text-lg font-bold" href="/BusinessRegPage">
-            Регистрация
-          </a>
-        )}
-      </div>
       {selectedItem && (
         <div className="flex flex-col p-2 bg-gray-50 border rounded">
           <label>

@@ -16,10 +16,10 @@ const Content = ({ token, baseUrl, selectedEmployee, handleUpdateCompany }) => {
   const fetchCompanyData = useCallback(async () => {
     console.log(companyId, token);
     
-    if (!companyId || !token) {
-      setFetchError('Отсутствует ID компании или токен авторизации');
-      return;
-    }
+    // if (!companyId || !token) {
+    //   setFetchError('Отсутствует ID компании или токен авторизации');
+    //   return;
+    // }
     setIsFetching(true);
     setFetchError('');
     try {
@@ -103,7 +103,7 @@ const Content = ({ token, baseUrl, selectedEmployee, handleUpdateCompany }) => {
 
   return (
     <div className="p-4">
-      <h1>text</h1>
+      <h1>Добро пожаловать в LoryCRM</h1>
     </div>
   );
 };
